@@ -1,30 +1,17 @@
 // @vitest-environment node
-import { fileURLToPath } from "node:url";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "#/server/db";
 import { counter } from "#/server/db/schema";
+import { closeTestDatabase } from "#/server/test/database";
 import { decrementCounter, getCounter, incrementCounter } from "./counter";
 
-// Replace the real database connection with an in-memory SQLite database so
-// the tests never touch the database configured through DATABASE_URL.
 vi.mock("#/server/db", async () => {
-	const { default: Database } = await import("better-sqlite3");
-	const { drizzle } = await import("drizzle-orm/better-sqlite3");
-	const schema = await import("#/server/db/schema");
-
-	const sqlite = new Database(":memory:");
-	const db = drizzle(sqlite, { schema });
-
-	return { db };
+	const { createTestDatabase } = await import("#/server/test/database");
+	return createTestDatabase();
 });
 
-const migrationsFolder = fileURLToPath(
-	new URL("../../../drizzle", import.meta.url),
-);
-
-beforeAll(() => {
-	migrate(db, { migrationsFolder });
+afterAll(async () => {
+	await closeTestDatabase(db);
 });
 
 beforeEach(async () => {

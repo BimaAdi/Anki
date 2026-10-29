@@ -1,20 +1,22 @@
-import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	boolean,
+	integer,
+	pgTable,
+	serial,
+	text,
+	timestamp,
+} from "drizzle-orm/pg-core";
 
-export const todos = sqliteTable("todos", {
-	id: integer({ mode: "number" }).primaryKey({
-		autoIncrement: true,
-	}),
+export const todos = pgTable("todos", {
+	id: serial("id").primaryKey(),
 	title: text().notNull(),
-	completed: integer({ mode: "boolean" }).notNull().default(false),
-	createdAt: integer("created_at", { mode: "timestamp" }).default(
-		sql`(unixepoch())`,
-	),
+	completed: boolean().notNull().default(false),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
 });
 
-export const counter = sqliteTable("counter", {
-	id: integer({ mode: "number" }).primaryKey({
-		autoIncrement: true,
-	}),
-	count: integer({ mode: "number" }).notNull().default(0),
+export const counter = pgTable("counter", {
+	id: serial("id").primaryKey(),
+	count: integer("count").notNull().default(0),
 });

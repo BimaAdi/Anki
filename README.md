@@ -1,5 +1,5 @@
-# TanStack Start Vibe
-I try full vibe coding as Software Engineer.
+# Anki 
+Anki app
 
 # for Vibe Coders
 - point your code agent to this folder
@@ -13,8 +13,15 @@ To run this application:
 
 ```bash
 pnpm install
+cp .env.example .env
+docker compose up -d postgres
+pnpm db:migrate
 pnpm dev
 ```
+
+The application uses PostgreSQL through Drizzle ORM and postgres.js. Set
+`DATABASE_URL` to a PostgreSQL database before running database commands or the
+application.
 
 # Building For Production
 
@@ -45,6 +52,12 @@ pnpm typecheck
 ```
 
 ## Test
+
+Tests load `DATABASE_URL` from `.env.local` or `.env`. They require a PostgreSQL
+server and a user that can create databases. Each service-test file creates a
+uniquely named database, runs the migrations against it, and drops it when the
+tests finish.
+
 ```bash
 pnpm test
 ```

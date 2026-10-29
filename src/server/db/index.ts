@@ -1,4 +1,5 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import * as schema from "./schema.ts";
 
@@ -8,4 +9,6 @@ if (!databaseUrl) {
 	throw new Error("DATABASE_URL is not set");
 }
 
-export const db = drizzle(databaseUrl, { schema });
+const client = postgres(databaseUrl);
+
+export const db = drizzle(client, { schema });

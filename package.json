@@ -33,10 +33,10 @@
     "@tanstack/react-router-devtools": "1.167.2",
     "@tanstack/react-router-ssr-query": "1.167.3",
     "@tanstack/react-start": "1.169.4",
-    "better-sqlite3": "^12.6.2",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
     "nitro": "3.0.260903-beta",
+    "postgres": "^3.4.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",
@@ -48,7 +48,6 @@
     "@tanstack/router-cli": "^1.132.0",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
-    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -59,12 +58,5 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^5.0.5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss",
-      "better-sqlite3"
-    ]
   }
 }
