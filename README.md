@@ -23,6 +23,25 @@ The application uses PostgreSQL through Drizzle ORM and postgres.js. Set
 `DATABASE_URL` to a PostgreSQL database before running database commands or the
 application.
 
+Set `BETTER_AUTH_SECRET` to a random value of at least 32 characters,
+`BETTER_AUTH_URL` to the app's origin, and add GitHub OAuth app credentials as
+`GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. For local GitHub OAuth, set the
+GitHub callback URL to `http://localhost:3000/api/auth/callback/github` and
+enable the `user:email` scope (or read-only email permission for a GitHub App).
+Generate a secret with `openssl rand -base64 32` and put it in `.env`.
+
+GitHub supports both first-time signup and future sign-ins. Email/password
+accounts are provisioned by an operator and can only sign in from the app:
+
+```bash
+pnpm auth:create-user -- --email user@example.com --name "Anki User"
+pnpm auth:change-password -- --email user@example.com
+```
+
+These commands prompt for a password without displaying it. `--password` is
+also available for non-interactive use. The `/dashboard` route requires an
+active Better Auth session.
+
 # Building For Production
 
 To build this application for production:

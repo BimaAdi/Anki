@@ -3,24 +3,16 @@ import { Link } from "@tanstack/react-router";
 export function Page() {
 	return (
 		<main className="mx-auto mt-10 max-w-xl p-6">
-			<h1 className="text-3xl font-bold">Vibe</h1>
+			<h1 className="text-3xl font-bold">Anki</h1>
 			<p className="mt-2 text-gray-600">
-				A small Todo app built with TanStack Start.
+				Your study space, ready when you are.
 			</p>
-			<div className="mt-6 flex gap-2">
-				<Link
-					to="/todo"
-					className="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-				>
-					Go to Todo List
-				</Link>
-				<Link
-					to="/counter"
-					className="inline-block rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-				>
-					Go to Counter
-				</Link>
-			</div>
+			<Link
+				to="/login"
+				className="mt-6 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+			>
+				Sign in
+			</Link>
 		</main>
 	);
 }
