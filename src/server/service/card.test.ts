@@ -59,6 +59,53 @@ describe("createCard", () => {
 		expect(result).toBeNull();
 		await expect(db.select().from(cards)).resolves.toEqual([]);
 	});
+
+	it("stops adding cards once the deck reaches the user's card limit", async () => {
+		await db.update(user).set({ cardLimit: 2 }).where(eq(user.id, "user-1"));
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+
+		await createCard("user-1", deck.id, { front: "one", back: "1" });
+		await createCard("user-1", deck.id, { front: "two", back: "2" });
+
+		await expect(
+			createCard("user-1", deck.id, { front: "three", back: "3" }),
+		).rejects.toThrow("card limit of 2");
+
+		const rows = await db.select().from(cards);
+		expect(rows).toHaveLength(2);
+	});
+
+	it("allows one hundred cards per deck by default", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		await db.insert(cards).values(
+			Array.from({ length: 100 }, (_, index) => ({
+				deckId: deck.id,
+				front: `front ${index}`,
+				back: `back ${index}`,
+			})),
+		);
+
+		await expect(
+			createCard("user-1", deck.id, { front: "too many", back: "x" }),
+		).rejects.toThrow("card limit of 100");
+	});
+
+	it("applies the card limit to each of the user's decks", async () => {
+		await db.update(user).set({ cardLimit: 1 }).where(eq(user.id, "user-1"));
+		const first = await createDeck("user-1", {
+			name: "First",
+			description: "",
+		});
+		const second = await createDeck("user-1", {
+			name: "Second",
+			description: "",
+		});
+
+		await createCard("user-1", first.id, { front: "one", back: "1" });
+		await expect(
+			createCard("user-1", second.id, { front: "two", back: "2" }),
+		).resolves.toMatchObject({ deckId: second.id, front: "two" });
+	});
 });
 
 describe("updateCard", () => {

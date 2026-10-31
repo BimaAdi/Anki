@@ -5,6 +5,7 @@ import { actionButtonClassName } from "#/client/component/shared/ActionButton";
 import { AppLayout } from "#/client/component/shared/AppLayout";
 import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
 import type { DeckSummary } from "#/server/schema/deck";
+import type { UserLimits } from "#/server/schema/user";
 import { listDecks } from "#/server/serverFn/deck";
 
 interface DashboardPageProps {
@@ -14,14 +15,20 @@ interface DashboardPageProps {
 		image?: string | null;
 	};
 	initialDecks: DeckSummary[];
+	limits: UserLimits;
 }
 
-export function DashboardPage({ user, initialDecks }: DashboardPageProps) {
+export function DashboardPage({
+	user,
+	initialDecks,
+	limits,
+}: DashboardPageProps) {
 	const { data: decks } = useQuery({
 		queryKey: decksQueryKey,
 		queryFn: () => listDecks(),
 		initialData: initialDecks,
 	});
+	const atDeckLimit = decks.length >= limits.deckLimit;
 
 	return (
 		<AppLayout>
@@ -40,16 +47,37 @@ export function DashboardPage({ user, initialDecks }: DashboardPageProps) {
 				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[1120px]"
 			>
 				<div className="flex items-end justify-between gap-4 border-b border-auth-line pb-3">
-					<h2
-						className="m-0 text-[17px] font-semibold tracking-[-0.035em]"
-						id="decks-title"
-					>
-						Your decks
-					</h2>
-					<Link to="/deck/create" className={actionButtonClassName("primary")}>
-						New deck
-					</Link>
+					<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+						<h2
+							className="m-0 text-[17px] font-semibold tracking-[-0.035em]"
+							id="decks-title"
+						>
+							Your decks
+						</h2>
+						<span className="text-xs font-semibold text-auth-muted">
+							{decks.length} / {limits.deckLimit} decks
+						</span>
+					</div>
+					{atDeckLimit ? (
+						<span className="text-xs font-semibold text-auth-muted">
+							Deck limit reached
+						</span>
+					) : (
+						<Link
+							to="/deck/create"
+							className={actionButtonClassName("primary")}
+						>
+							New deck
+						</Link>
+					)}
 				</div>
+
+				{atDeckLimit ? (
+					<output className="mt-4 block rounded-lg border border-auth-line bg-[#fffefa] px-4 py-3 text-[13px] leading-[1.6] text-auth-muted">
+						You have reached your deck limit of {limits.deckLimit}. Delete a
+						deck to create another one.
+					</output>
+				) : null}
 
 				{decks.length === 0 ? (
 					<div className="mt-6 rounded-xl border border-dashed border-[#cfd5c9] bg-[#fffefa] p-[27px]">

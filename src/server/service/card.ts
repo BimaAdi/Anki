@@ -1,7 +1,11 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards } from "#/server/db/schema";
 import { findOwnedDeck, ownedDeckIds } from "#/server/service/deck";
+import {
+	CardLimitReachedError,
+	getUserLimits,
+} from "#/server/service/user-limits";
 
 export async function createCard(
 	userId: string,
@@ -11,6 +15,22 @@ export async function createCard(
 	const deck = await findOwnedDeck(userId, deckId);
 	if (!deck) {
 		return null;
+	}
+
+	const [limits, [cardCount]] = await Promise.all([
+		getUserLimits(userId),
+		db
+			.select({ value: count(cards.id) })
+			.from(cards)
+			.where(eq(cards.deckId, deck.id)),
+	]);
+
+	if (!limits) {
+		throw new Error("User not found");
+	}
+
+	if (cardCount.value >= limits.cardLimit) {
+		throw new CardLimitReachedError(limits.cardLimit);
 	}
 
 	const [card] = await db

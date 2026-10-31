@@ -62,6 +62,7 @@ const deck: DeckDetail = {
 	id: 1,
 	name: "Spanish",
 	description: "Basic verbs",
+	cardLimit: 100,
 	cards: [
 		{ id: 10, deckId: 1, front: "hola", back: "hello" },
 		{ id: 11, deckId: 1, front: "adios", back: "goodbye" },
@@ -152,6 +153,19 @@ describe("deck page", () => {
 			screen.getByText("No cards yet. Add your first card above."),
 		).toBeTruthy();
 		expect(screen.getByText("0 cards")).toBeTruthy();
+	});
+
+	it("shows the card limit for the deck", () => {
+		renderPage();
+
+		expect(screen.getByText("Limit 100")).toBeTruthy();
+	});
+
+	it("hides the add form and explains when the deck reaches its card limit", () => {
+		renderPage({ ...deck, cardLimit: 2 });
+
+		expect(screen.getByRole("status").textContent).toContain("card limit of 2");
+		expect(screen.queryByRole("button", { name: "Add card" })).toBeNull();
 	});
 
 	it("adds a card, refreshes the deck, and clears the form", async () => {

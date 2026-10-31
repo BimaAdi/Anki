@@ -23,6 +23,7 @@ export const deckSummarySchema = deckSchema.extend({
 });
 
 export const deckDetailSchema = deckSchema.extend({
+	cardLimit: z.number().int().nonnegative(),
 	cards: z.array(cardSchema),
 });
 

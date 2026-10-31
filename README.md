@@ -47,6 +47,16 @@ These commands prompt for a password without displaying it. `--password` is
 also available for non-interactive use. The `/dashboard` route requires an
 active Better Auth session.
 
+Each account has a deck limit (default `10`) and a per-deck card limit (default
+`100`). New and existing accounts receive the defaults, and only an operator can
+change them through the CLI:
+
+```bash
+pnpm auth:set-limits -- --email user@example.com --deck-limit 20 --card-limit 250
+```
+
+Omit either limit option to leave that limit unchanged.
+
 # Building For Production
 
 To build this application for production:

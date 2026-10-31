@@ -39,6 +39,7 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	});
 
 	const cardsNewestFirst = [...deck.cards].sort((a, b) => b.id - a.id);
+	const atCardLimit = deck.cards.length >= deck.cardLimit;
 
 	function refreshDeck() {
 		void queryClient.invalidateQueries({ queryKey: deckQueryKey(deckId) });
@@ -156,25 +157,42 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					>
 						Cards
 					</h2>
-					<span className="text-xs font-semibold text-auth-muted">
-						{formatCardCount(deck.cards.length)}
-					</span>
+					<div className="flex items-baseline gap-2">
+						<span className="text-xs font-semibold text-auth-muted">
+							{formatCardCount(deck.cards.length)}
+						</span>
+						<span className="text-xs text-auth-muted">
+							Limit {deck.cardLimit}
+						</span>
+					</div>
 				</div>
 
-				<div className="mt-6 rounded-xl border border-auth-line bg-[#fffefa] p-[22px]">
-					<h3 className="m-0 mb-4 text-[15px] font-semibold tracking-[-0.03em]">
-						Add a card
-					</h3>
-					<CardForm
-						key={addFormKey}
-						submitLabel="Add card"
-						onSubmit={async (values) => {
-							resetErrors();
-							await addCard.mutateAsync(values);
-							setAddFormKey((key) => key + 1);
-						}}
-					/>
-				</div>
+				{atCardLimit ? (
+					<output className="mt-6 block rounded-xl border border-auth-line bg-[#fffefa] p-[22px]">
+						<span className="mb-2 block text-[15px] font-semibold tracking-[-0.03em]">
+							Card limit reached
+						</span>
+						<span className="block text-[13px] leading-[1.6] text-auth-muted">
+							This deck has reached its card limit of {deck.cardLimit}. Delete a
+							card to add another one.
+						</span>
+					</output>
+				) : (
+					<div className="mt-6 rounded-xl border border-auth-line bg-[#fffefa] p-[22px]">
+						<h3 className="m-0 mb-4 text-[15px] font-semibold tracking-[-0.03em]">
+							Add a card
+						</h3>
+						<CardForm
+							key={addFormKey}
+							submitLabel="Add card"
+							onSubmit={async (values) => {
+								resetErrors();
+								await addCard.mutateAsync(values);
+								setAddFormKey((key) => key + 1);
+							}}
+						/>
+					</div>
+				)}
 
 				{deck.cards.length === 0 ? (
 					<p className="mt-6 text-sm text-auth-muted">

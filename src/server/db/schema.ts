@@ -35,6 +35,8 @@ export const user = pgTable("user", {
 		.notNull()
 		.defaultNow(),
 	role: text("role").notNull().default("user"),
+	deckLimit: integer("deck_limit").notNull().default(10),
+	cardLimit: integer("card_limit").notNull().default(100),
 	banned: boolean("banned").notNull().default(false),
 	banReason: text("ban_reason"),
 	banExpires: timestamp("ban_expires", { withTimezone: true }),

@@ -36,6 +36,7 @@ const deck: DeckDetail = {
 	id: 1,
 	name: "Spanish",
 	description: null,
+	cardLimit: 100,
 	cards: [
 		{ id: 10, deckId: 1, front: "hola", back: "hello" },
 		{ id: 11, deckId: 1, front: "adios", back: "goodbye" },

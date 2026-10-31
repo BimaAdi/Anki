@@ -54,6 +54,42 @@ describe("createDeck", () => {
 
 		expect(created.description).toBeNull();
 	});
+
+	it("stops creating decks once the user's deck limit is reached", async () => {
+		await db.update(user).set({ deckLimit: 2 }).where(eq(user.id, "user-1"));
+
+		await createDeck("user-1", { name: "One", description: "" });
+		await createDeck("user-1", { name: "Two", description: "" });
+
+		await expect(
+			createDeck("user-1", { name: "Three", description: "" }),
+		).rejects.toThrow("deck limit of 2");
+
+		const rows = await db
+			.select()
+			.from(decks)
+			.where(eq(decks.userId, "user-1"));
+		expect(rows).toHaveLength(2);
+	});
+
+	it("allows ten decks by default", async () => {
+		for (let index = 0; index < 10; index += 1) {
+			await createDeck("user-1", { name: `Deck ${index}`, description: "" });
+		}
+
+		await expect(
+			createDeck("user-1", { name: "Too many", description: "" }),
+		).rejects.toThrow("deck limit of 10");
+	});
+
+	it("counts only the user's own decks against the limit", async () => {
+		await db.update(user).set({ deckLimit: 1 }).where(eq(user.id, "user-1"));
+		await createDeck("user-2", { name: "Other user", description: "" });
+
+		await expect(
+			createDeck("user-1", { name: "First", description: "" }),
+		).resolves.toMatchObject({ name: "First" });
+	});
 });
 
 describe("listDecks", () => {
