@@ -12,7 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DeckIdRouteImport } from './routes/deck.$id'
+import { Route as DeckCreateRouteImport } from './routes/deck.create'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as DeckIdEditRouteImport } from './routes/deck.$id_.edit'
+import { Route as DeckIdPlayRouteImport } from './routes/deck.$id_.play'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,9 +33,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeckIdRoute = DeckIdRouteImport.update({
+  id: '/deck/$id',
+  path: '/deck/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeckCreateRoute = DeckCreateRouteImport.update({
+  id: '/deck/create',
+  path: '/deck/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeckIdEditRoute = DeckIdEditRouteImport.update({
+  id: '/deck/$id_/edit',
+  path: '/deck/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeckIdPlayRoute = DeckIdPlayRouteImport.update({
+  id: '/deck/$id_/play',
+  path: '/deck/$id/play',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -39,34 +63,75 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/deck/$id': typeof DeckIdRoute
+  '/deck/create': typeof DeckCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/deck/$id/edit': typeof DeckIdEditRoute
+  '/deck/$id/play': typeof DeckIdPlayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/deck/$id': typeof DeckIdRoute
+  '/deck/create': typeof DeckCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/deck/$id/edit': typeof DeckIdEditRoute
+  '/deck/$id/play': typeof DeckIdPlayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/deck/$id': typeof DeckIdRoute
+  '/deck/create': typeof DeckCreateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/deck/$id_/edit': typeof DeckIdEditRoute
+  '/deck/$id_/play': typeof DeckIdPlayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/deck/$id'
+    | '/deck/create'
+    | '/api/auth/$'
+    | '/deck/$id/edit'
+    | '/deck/$id/play'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/api/auth/$'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/api/auth/$'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/deck/$id'
+    | '/deck/create'
+    | '/api/auth/$'
+    | '/deck/$id/edit'
+    | '/deck/$id/play'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/deck/$id'
+    | '/deck/create'
+    | '/api/auth/$'
+    | '/deck/$id_/edit'
+    | '/deck/$id_/play'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  DeckIdRoute: typeof DeckIdRoute
+  DeckCreateRoute: typeof DeckCreateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  DeckIdEditRoute: typeof DeckIdEditRoute
+  DeckIdPlayRoute: typeof DeckIdPlayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,11 +157,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/deck/$id': {
+      id: '/deck/$id'
+      path: '/deck/$id'
+      fullPath: '/deck/$id'
+      preLoaderRoute: typeof DeckIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deck/create': {
+      id: '/deck/create'
+      path: '/deck/create'
+      fullPath: '/deck/create'
+      preLoaderRoute: typeof DeckCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deck/$id_/edit': {
+      id: '/deck/$id_/edit'
+      path: '/deck/$id/edit'
+      fullPath: '/deck/$id/edit'
+      preLoaderRoute: typeof DeckIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deck/$id_/play': {
+      id: '/deck/$id_/play'
+      path: '/deck/$id/play'
+      fullPath: '/deck/$id/play'
+      preLoaderRoute: typeof DeckIdPlayRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,7 +199,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  DeckIdRoute: DeckIdRoute,
+  DeckCreateRoute: DeckCreateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  DeckIdEditRoute: DeckIdEditRoute,
+  DeckIdPlayRoute: DeckIdPlayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

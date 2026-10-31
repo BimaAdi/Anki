@@ -108,3 +108,35 @@ export const verification = pgTable(
 	},
 	(table) => [index("verification_identifier_idx").on(table.identifier)],
 );
+
+export const decks = pgTable(
+	"decks",
+	{
+		id: serial("id").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		description: text("description"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [index("decks_user_id_idx").on(table.userId)],
+);
+
+export const cards = pgTable(
+	"cards",
+	{
+		id: serial("id").primaryKey(),
+		deckId: integer("deck_id")
+			.notNull()
+			.references(() => decks.id, { onDelete: "cascade" }),
+		front: text("front").notNull(),
+		back: text("back").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [index("cards_deck_id_idx").on(table.deckId)],
+);

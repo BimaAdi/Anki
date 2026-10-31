@@ -1,21 +1,21 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { DashboardPage } from "#/client/component/routes/dashboard/Page";
-import { getSession } from "#/server/auth.functions";
+import { requireSession } from "#/client/lib/require-session";
+import { listDecks } from "#/server/serverFn/deck";
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async () => {
-		const session = await getSession();
-		if (!session) {
-			throw redirect({ to: "/login" });
-		}
-
+		const session = await requireSession();
 		return { user: session.user };
 	},
+	loader: () => listDecks(),
 	component: Dashboard,
 });
 
 function Dashboard() {
 	const { user } = Route.useRouteContext();
-	return <DashboardPage user={user} />;
+	const initialDecks = Route.useLoaderData();
+
+	return <DashboardPage user={user} initialDecks={initialDecks} />;
 }

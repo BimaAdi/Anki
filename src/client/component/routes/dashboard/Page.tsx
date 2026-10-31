@@ -1,7 +1,13 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { actionButtonClassName } from "#/client/component/shared/ActionButton";
+import { AppLayout } from "#/client/component/shared/AppLayout";
 import { authClient } from "#/client/lib/auth-client";
+import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
+import type { DeckSummary } from "#/server/schema/deck";
+import { listDecks } from "#/server/serverFn/deck";
 
 interface DashboardPageProps {
 	user: {
@@ -9,12 +15,18 @@ interface DashboardPageProps {
 		email: string;
 		image?: string | null;
 	};
+	initialDecks: DeckSummary[];
 }
 
-export function DashboardPage({ user }: DashboardPageProps) {
+export function DashboardPage({ user, initialDecks }: DashboardPageProps) {
 	const navigate = useNavigate();
 	const [signingOut, setSigningOut] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const { data: decks } = useQuery({
+		queryKey: decksQueryKey,
+		queryFn: () => listDecks(),
+		initialData: initialDecks,
+	});
 
 	async function signOut() {
 		setSigningOut(true);
@@ -36,21 +48,8 @@ export function DashboardPage({ user }: DashboardPageProps) {
 	}
 
 	return (
-		<main className="min-h-screen px-[clamp(24px,6vw,84px)] py-[30px] max-[700px]:px-5 max-[700px]:py-[22px]">
-			<header className="mx-auto flex max-w-[1120px] items-center justify-between border-b border-auth-line pb-5">
-				<a
-					className="inline-flex w-fit items-center gap-[11px] text-xl font-bold tracking-[-0.06em] text-auth-ink no-underline"
-					href="/"
-					aria-label="Anki home"
-				>
-					<span
-						className="grid size-8 place-items-center rounded-[10px] bg-auth-lime text-base font-extrabold tracking-[-0.08em] text-auth-ink"
-						aria-hidden="true"
-					>
-						A
-					</span>
-					<span>Anki</span>
-				</a>
+		<AppLayout
+			actions={
 				<button
 					className="cursor-pointer rounded-[7px] border border-auth-line bg-transparent px-[13px] py-[9px] text-xs font-semibold text-auth-ink-soft hover:border-[#bdc4b9] disabled:cursor-wait disabled:opacity-70"
 					type="button"
@@ -59,16 +58,17 @@ export function DashboardPage({ user }: DashboardPageProps) {
 				>
 					{signingOut ? "Signing out…" : "Sign out"}
 				</button>
-			</header>
+			}
+		>
 			{error ? (
 				<p
-					className="-mt-[5px] mb-[15px] text-xs leading-[1.5] text-auth-error"
+					className="mx-auto mt-5 mb-0 max-w-[1120px] text-xs leading-[1.5] text-auth-error"
 					role="alert"
 				>
 					{error}
 				</p>
 			) : null}
-			<section className="mx-auto mt-[clamp(70px,13vh,140px)] max-w-[760px] max-[700px]:mt-[76px]">
+			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[760px]">
 				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
 					Your study space
 				</p>
@@ -76,23 +76,72 @@ export function DashboardPage({ user }: DashboardPageProps) {
 					Welcome, {user.name}.
 				</h1>
 				<p className="m-0 text-sm text-auth-muted">Signed in as {user.email}</p>
-				<div className="mt-[52px] flex items-start gap-5 rounded-xl border border-auth-line bg-[#fffefa] p-[27px] max-[700px]:mt-9 max-[700px]:gap-[14px] max-[700px]:p-[21px]">
-					<span
-						className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#eef4db] text-xl text-[#4b633c]"
-						aria-hidden="true"
+			</section>
+
+			<section
+				aria-labelledby="decks-title"
+				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[1120px]"
+			>
+				<div className="flex items-end justify-between gap-4 border-b border-auth-line pb-3">
+					<h2
+						className="m-0 text-[17px] font-semibold tracking-[-0.035em]"
+						id="decks-title"
 					>
-						✳
-					</span>
-					<div>
-						<h2 className="mt-[3px] mb-2 text-[17px] tracking-[-0.035em]">
-							Your next session starts here.
-						</h2>
+						Your decks
+					</h2>
+					<Link to="/deck/create" className={actionButtonClassName("primary")}>
+						New deck
+					</Link>
+				</div>
+
+				{decks.length === 0 ? (
+					<div className="mt-6 rounded-xl border border-dashed border-[#cfd5c9] bg-[#fffefa] p-[27px]">
+						<h3 className="m-0 mb-2 text-[17px] tracking-[-0.035em]">
+							No decks yet.
+						</h3>
 						<p className="m-0 text-[13px] leading-[1.6] text-auth-muted">
-							Your account is ready. Keep showing up, one small step at a time.
+							Create your first deck, add some cards, then play it whenever you
+							want to study.
 						</p>
 					</div>
-				</div>
+				) : (
+					<ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						{decks.map((deck) => (
+							<li
+								key={deck.id}
+								className="flex flex-col justify-between gap-5 rounded-xl border border-auth-line bg-[#fffefa] p-[22px]"
+							>
+								<div className="min-w-0">
+									<Link
+										to="/deck/$id"
+										params={{ id: String(deck.id) }}
+										className="text-[17px] font-semibold tracking-[-0.035em] text-auth-ink no-underline hover:underline [overflow-wrap:anywhere]"
+									>
+										{deck.name}
+									</Link>
+									{deck.description ? (
+										<p className="m-0 mt-2 line-clamp-2 text-[13px] leading-[1.6] text-auth-muted">
+											{deck.description}
+										</p>
+									) : null}
+								</div>
+								<div className="flex items-center justify-between gap-3">
+									<span className="text-xs font-semibold text-auth-muted">
+										{formatCardCount(deck.cardCount)}
+									</span>
+									<Link
+										to="/deck/$id/play"
+										params={{ id: String(deck.id) }}
+										className={actionButtonClassName("primary")}
+									>
+										Play
+									</Link>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
 			</section>
-		</main>
+		</AppLayout>
 	);
 }
