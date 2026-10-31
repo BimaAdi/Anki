@@ -1,6 +1,11 @@
 import { and, asc, count, eq } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards, decks } from "#/server/db/schema";
+import { createDeckSchema } from "#/server/schema/deck";
+import {
+	DeckLimitReachedError,
+	getUserLimits,
+} from "#/server/service/user-limits";
 
 export function ownedDeckIds(userId: string) {
 	return db
@@ -39,25 +44,50 @@ export async function getDeck(userId: string, deckId: number) {
 		return null;
 	}
 
-	const deckCards = await db
-		.select()
-		.from(cards)
-		.where(eq(cards.deckId, deck.id))
-		.orderBy(asc(cards.id));
+	const [limits, deckCards] = await Promise.all([
+		getUserLimits(userId),
+		db
+			.select()
+			.from(cards)
+			.where(eq(cards.deckId, deck.id))
+			.orderBy(asc(cards.id)),
+	]);
 
-	return { ...deck, cards: deckCards };
+	if (!limits) {
+		return null;
+	}
+
+	return { ...deck, cardLimit: limits.cardLimit, cards: deckCards };
 }
 
 export async function createDeck(
 	userId: string,
 	input: { name: string; description: string },
 ) {
+	const values = createDeckSchema.parse(input);
+
+	const [limits, [deckCount]] = await Promise.all([
+		getUserLimits(userId),
+		db
+			.select({ value: count(decks.id) })
+			.from(decks)
+			.where(eq(decks.userId, userId)),
+	]);
+
+	if (!limits) {
+		throw new Error("User not found");
+	}
+
+	if (deckCount.value >= limits.deckLimit) {
+		throw new DeckLimitReachedError(limits.deckLimit);
+	}
+
 	const [deck] = await db
 		.insert(decks)
 		.values({
 			userId,
-			name: input.name,
-			description: input.description || null,
+			name: values.name,
+			description: values.description || null,
 		})
 		.returning();
 
@@ -69,11 +99,13 @@ export async function updateDeck(
 	deckId: number,
 	input: { name: string; description: string },
 ) {
+	const values = createDeckSchema.parse(input);
+
 	const [deck] = await db
 		.update(decks)
 		.set({
-			name: input.name,
-			description: input.description || null,
+			name: values.name,
+			description: values.description || null,
 		})
 		.where(and(eq(decks.id, deckId), eq(decks.userId, userId)))
 		.returning();

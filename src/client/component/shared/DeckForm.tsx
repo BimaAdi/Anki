@@ -1,7 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 
-import { deckDescriptionSchema, deckNameSchema } from "#/server/schema/deck";
+import {
+	DECK_DESCRIPTION_MAX_LENGTH,
+	DECK_NAME_MAX_LENGTH,
+	deckDescriptionSchema,
+	deckNameSchema,
+} from "#/server/schema/deck";
 import { Button } from "./Button";
+import { CharacterCount } from "./CharacterCount";
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
 
@@ -64,18 +70,24 @@ export function DeckForm({
 			<form.Field name="name" validators={{ onChange: deckNameSchema }}>
 				{(field) => (
 					<div className="mb-[19px] flex flex-col">
-						<label
-							className="mb-2 text-xs font-[650] text-auth-ink-soft"
-							htmlFor={field.name}
-						>
-							Name
-						</label>
+						<div className="mb-2 flex items-baseline justify-between gap-3">
+							<label
+								className="text-xs font-[650] text-auth-ink-soft"
+								htmlFor={field.name}
+							>
+								Name
+							</label>
+							<CharacterCount
+								current={field.state.value.length}
+								max={DECK_NAME_MAX_LENGTH}
+							/>
+						</div>
 						<Input
 							id={field.name}
 							name={field.name}
 							type="text"
 							placeholder="e.g. Spanish verbs"
-							maxLength={100}
+							maxLength={DECK_NAME_MAX_LENGTH}
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(event) => field.handleChange(event.target.value)}
@@ -95,17 +107,23 @@ export function DeckForm({
 			>
 				{(field) => (
 					<div className="mb-[19px] flex flex-col">
-						<label
-							className="mb-2 text-xs font-[650] text-auth-ink-soft"
-							htmlFor={field.name}
-						>
-							Description
-						</label>
+						<div className="mb-2 flex items-baseline justify-between gap-3">
+							<label
+								className="text-xs font-[650] text-auth-ink-soft"
+								htmlFor={field.name}
+							>
+								Description
+							</label>
+							<CharacterCount
+								current={field.state.value.length}
+								max={DECK_DESCRIPTION_MAX_LENGTH}
+							/>
+						</div>
 						<Textarea
 							id={field.name}
 							name={field.name}
 							placeholder="What is this deck about? (optional)"
-							maxLength={500}
+							maxLength={DECK_DESCRIPTION_MAX_LENGTH}
 							rows={3}
 							value={field.state.value}
 							onBlur={field.handleBlur}

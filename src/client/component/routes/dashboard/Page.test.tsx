@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DeckSummary } from "#/server/schema/deck";
+import type { UserLimits } from "#/server/schema/user";
 
 const { navigate, signOut } = vi.hoisted(() => ({
 	navigate: vi.fn(),
@@ -54,8 +55,12 @@ vi.mock("#/server/serverFn/deck", () => ({
 import { DashboardPage } from "./Page";
 
 const user = { name: "Anki User", email: "user@example.com" };
+const defaultLimits: UserLimits = { deckLimit: 10, cardLimit: 100 };
 
-function renderPage(decks: DeckSummary[] = []) {
+function renderPage(
+	decks: DeckSummary[] = [],
+	limits: UserLimits = defaultLimits,
+) {
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: { staleTime: Number.POSITIVE_INFINITY, retry: false },
@@ -64,7 +69,7 @@ function renderPage(decks: DeckSummary[] = []) {
 
 	render(
 		<QueryClientProvider client={queryClient}>
-			<DashboardPage user={user} initialDecks={decks} />
+			<DashboardPage user={user} initialDecks={decks} limits={limits} />
 		</QueryClientProvider>,
 	);
 }
@@ -111,6 +116,23 @@ describe("dashboard page", () => {
 			"/deck/2/play",
 		]);
 		expect(screen.queryByText("No decks yet.")).toBeNull();
+	});
+
+	it("shows how many decks the user has out of their limit", () => {
+		renderPage([{ id: 1, name: "Spanish", description: null, cardCount: 2 }]);
+
+		expect(screen.getByText("1 / 10 decks")).toBeTruthy();
+	});
+
+	it("hides the new deck link and explains when the deck limit is reached", () => {
+		renderPage([{ id: 1, name: "Spanish", description: null, cardCount: 2 }], {
+			deckLimit: 1,
+			cardLimit: 100,
+		});
+
+		expect(screen.getByText("1 / 1 decks")).toBeTruthy();
+		expect(screen.getByRole("status").textContent).toContain("deck limit of 1");
+		expect(screen.queryByRole("link", { name: "New deck" })).toBeNull();
 	});
 
 	it("signs out and returns to the login page", async () => {

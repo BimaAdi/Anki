@@ -75,6 +75,58 @@ describe("create deck page", () => {
 		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
 	});
 
+	it("shows the character count and limit for each field", () => {
+		renderPage();
+
+		expect(screen.getByText("0/50")).toBeTruthy();
+		expect(screen.getByText("0/100")).toBeTruthy();
+	});
+
+	it("updates the character counters as the user types", () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Name"), {
+			target: { value: "Spanish" },
+		});
+		fireEvent.change(screen.getByLabelText("Description"), {
+			target: { value: "Verbs" },
+		});
+
+		expect(screen.getByText("7/50")).toBeTruthy();
+		expect(screen.getByText("5/100")).toBeTruthy();
+	});
+
+	it("does not create a deck when the name exceeds 50 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Name"), {
+			target: { value: "a".repeat(51) },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Create deck" }));
+
+		expect(
+			await screen.findByText("Name must be 50 characters or less"),
+		).toBeTruthy();
+		expect(createDeck).not.toHaveBeenCalled();
+	});
+
+	it("does not create a deck when the description exceeds 100 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Name"), {
+			target: { value: "Spanish" },
+		});
+		fireEvent.change(screen.getByLabelText("Description"), {
+			target: { value: "a".repeat(101) },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Create deck" }));
+
+		expect(
+			await screen.findByText("Description must be 100 characters or less"),
+		).toBeTruthy();
+		expect(createDeck).not.toHaveBeenCalled();
+	});
+
 	it("creates the deck with trimmed values and opens it", async () => {
 		vi.mocked(createDeck).mockResolvedValue({
 			id: 7,

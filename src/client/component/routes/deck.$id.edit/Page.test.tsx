@@ -92,6 +92,41 @@ describe("edit deck page", () => {
 		).toBe("Verbs");
 	});
 
+	it("shows the character count and limit for the current values", () => {
+		renderPage();
+
+		expect(screen.getByText("7/50")).toBeTruthy();
+		expect(screen.getByText("5/100")).toBeTruthy();
+	});
+
+	it("does not save when the name exceeds 50 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Name"), {
+			target: { value: "a".repeat(51) },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Save deck" }));
+
+		expect(
+			await screen.findByText("Name must be 50 characters or less"),
+		).toBeTruthy();
+		expect(updateDeck).not.toHaveBeenCalled();
+	});
+
+	it("does not save when the description exceeds 100 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Description"), {
+			target: { value: "a".repeat(101) },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Save deck" }));
+
+		expect(
+			await screen.findByText("Description must be 100 characters or less"),
+		).toBeTruthy();
+		expect(updateDeck).not.toHaveBeenCalled();
+	});
+
 	it("saves the changes and returns to the deck", async () => {
 		vi.mocked(updateDeck).mockResolvedValue({
 			id: 3,

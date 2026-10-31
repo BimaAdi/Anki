@@ -5,6 +5,7 @@ import {
 	changePassword,
 } from "./change-password.ts";
 import { type CreateUserOptions, createUser } from "./create-user.ts";
+import { type SetLimitsOptions, setLimits } from "./set-limits.ts";
 
 config({ path: [".env.local", ".env"] });
 
@@ -30,6 +31,18 @@ cli
 	.example('pnpm auth:change-password -- --email "user@example.com"')
 	.action((options: ChangePasswordOptions) => {
 		action = changePassword(options);
+	});
+
+cli
+	.command("set-limits", "Set a user's deck and card limits")
+	.option("--email <email>", "Email address for the account")
+	.option("--deck-limit <number>", "Maximum number of decks the user can own")
+	.option("--card-limit <number>", "Maximum number of cards per deck")
+	.example(
+		'pnpm auth:set-limits -- --email "user@example.com" --deck-limit 10 --card-limit 100',
+	)
+	.action((options: SetLimitsOptions) => {
+		action = setLimits(options);
 	});
 
 cli.help();
