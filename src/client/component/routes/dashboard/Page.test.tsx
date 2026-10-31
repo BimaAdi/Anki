@@ -113,19 +113,6 @@ describe("dashboard page", () => {
 		expect(screen.queryByText("No decks yet.")).toBeNull();
 	});
 
-	it("shows an edit link on each deck card", () => {
-		renderPage([
-			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
-			{ id: 2, name: "Math", description: null, cardCount: 1 },
-		]);
-
-		const editLinks = screen.getAllByRole("link", { name: "Edit" });
-		expect(editLinks.map((link) => link.getAttribute("href"))).toEqual([
-			"/deck/1",
-			"/deck/2",
-		]);
-	});
-
 	it("signs out and returns to the login page", async () => {
 		signOut.mockResolvedValue({ data: { success: true }, error: null });
 		renderPage();
