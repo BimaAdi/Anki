@@ -1,6 +1,7 @@
 import { and, asc, count, eq } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards, decks } from "#/server/db/schema";
+import { createDeckSchema } from "#/server/schema/deck";
 import {
 	DeckLimitReachedError,
 	getUserLimits,
@@ -63,6 +64,8 @@ export async function createDeck(
 	userId: string,
 	input: { name: string; description: string },
 ) {
+	const values = createDeckSchema.parse(input);
+
 	const [limits, [deckCount]] = await Promise.all([
 		getUserLimits(userId),
 		db
@@ -83,8 +86,8 @@ export async function createDeck(
 		.insert(decks)
 		.values({
 			userId,
-			name: input.name,
-			description: input.description || null,
+			name: values.name,
+			description: values.description || null,
 		})
 		.returning();
 
@@ -96,11 +99,13 @@ export async function updateDeck(
 	deckId: number,
 	input: { name: string; description: string },
 ) {
+	const values = createDeckSchema.parse(input);
+
 	const [deck] = await db
 		.update(decks)
 		.set({
-			name: input.name,
-			description: input.description || null,
+			name: values.name,
+			description: values.description || null,
 		})
 		.where(and(eq(decks.id, deckId), eq(decks.userId, userId)))
 		.returning();

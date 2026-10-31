@@ -161,6 +161,61 @@ describe("deck page", () => {
 		expect(screen.getByText("Limit 100")).toBeTruthy();
 	});
 
+	it("shows the character count and limit for each card side", () => {
+		renderPage();
+
+		expect(screen.getByText("0/150")).toBeTruthy();
+		expect(screen.getByText("0/250")).toBeTruthy();
+	});
+
+	it("updates the card counters as the user types", () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Front"), {
+			target: { value: "hola" },
+		});
+		fireEvent.change(screen.getByLabelText("Back"), {
+			target: { value: "hello" },
+		});
+
+		expect(screen.getByText("4/150")).toBeTruthy();
+		expect(screen.getByText("5/250")).toBeTruthy();
+	});
+
+	it("does not add a card when the front exceeds 150 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Front"), {
+			target: { value: "a".repeat(151) },
+		});
+		fireEvent.change(screen.getByLabelText("Back"), {
+			target: { value: "answer" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
+
+		expect(
+			await screen.findByText("Front must be 150 characters or less"),
+		).toBeTruthy();
+		expect(createCard).not.toHaveBeenCalled();
+	});
+
+	it("does not add a card when the back exceeds 250 characters", async () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Front"), {
+			target: { value: "question" },
+		});
+		fireEvent.change(screen.getByLabelText("Back"), {
+			target: { value: "a".repeat(251) },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
+
+		expect(
+			await screen.findByText("Back must be 250 characters or less"),
+		).toBeTruthy();
+		expect(createCard).not.toHaveBeenCalled();
+	});
+
 	it("hides the add form and explains when the deck reaches its card limit", () => {
 		renderPage({ ...deck, cardLimit: 2 });
 
@@ -199,7 +254,7 @@ describe("deck page", () => {
 		expect((screen.getByLabelText("Back") as HTMLTextAreaElement).value).toBe(
 			"",
 		);
-		expect(screen.queryByText("This side is required")).toBeNull();
+		expect(screen.queryByText("Back is required")).toBeNull();
 	});
 
 	it("shows the newly added card as the first item", async () => {
@@ -234,7 +289,7 @@ describe("deck page", () => {
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
 
-		expect(await screen.findByText("This side is required")).toBeTruthy();
+		expect(await screen.findByText("Back is required")).toBeTruthy();
 		expect(createCard).not.toHaveBeenCalled();
 	});
 

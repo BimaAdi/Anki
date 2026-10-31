@@ -45,6 +45,32 @@ describe("createCard", () => {
 		expect(rows).toEqual([expect.objectContaining({ front: "hola" })]);
 	});
 
+	it("rejects a front longer than 150 characters", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+
+		await expect(
+			createCard("user-1", deck.id, {
+				front: "a".repeat(151),
+				back: "answer",
+			}),
+		).rejects.toThrow("Front must be 150 characters or less");
+
+		await expect(db.select().from(cards)).resolves.toEqual([]);
+	});
+
+	it("rejects a back longer than 250 characters", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+
+		await expect(
+			createCard("user-1", deck.id, {
+				front: "question",
+				back: "a".repeat(251),
+			}),
+		).rejects.toThrow("Back must be 250 characters or less");
+
+		await expect(db.select().from(cards)).resolves.toEqual([]);
+	});
+
 	it("returns null and inserts nothing when the deck belongs to another user", async () => {
 		const deck = await createDeck("user-2", {
 			name: "Private",
@@ -126,6 +152,48 @@ describe("updateCard", () => {
 			front: "new front",
 			back: "new back",
 		});
+	});
+
+	it("rejects a front longer than 150 characters and leaves the card unchanged", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		const card = await createCard("user-1", deck.id, {
+			front: "keep",
+			back: "keep",
+		});
+
+		await expect(
+			updateCard("user-1", card?.id ?? 0, {
+				front: "a".repeat(151),
+				back: "keep",
+			}),
+		).rejects.toThrow("Front must be 150 characters or less");
+
+		const [row] = await db
+			.select()
+			.from(cards)
+			.where(eq(cards.id, card?.id ?? 0));
+		expect(row.front).toBe("keep");
+	});
+
+	it("rejects a back longer than 250 characters and leaves the card unchanged", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		const card = await createCard("user-1", deck.id, {
+			front: "keep",
+			back: "keep",
+		});
+
+		await expect(
+			updateCard("user-1", card?.id ?? 0, {
+				front: "keep",
+				back: "a".repeat(251),
+			}),
+		).rejects.toThrow("Back must be 250 characters or less");
+
+		const [row] = await db
+			.select()
+			.from(cards)
+			.where(eq(cards.id, card?.id ?? 0));
+		expect(row.back).toBe("keep");
 	});
 
 	it("returns null and leaves the card unchanged when it belongs to another user", async () => {

@@ -1,6 +1,7 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards } from "#/server/db/schema";
+import { createCardSchema, updateCardSchema } from "#/server/schema/card";
 import { findOwnedDeck, ownedDeckIds } from "#/server/service/deck";
 import {
 	CardLimitReachedError,
@@ -12,7 +13,9 @@ export async function createCard(
 	deckId: number,
 	input: { front: string; back: string },
 ) {
-	const deck = await findOwnedDeck(userId, deckId);
+	const values = createCardSchema.parse({ deckId, ...input });
+
+	const deck = await findOwnedDeck(userId, values.deckId);
 	if (!deck) {
 		return null;
 	}
@@ -35,7 +38,7 @@ export async function createCard(
 
 	const [card] = await db
 		.insert(cards)
-		.values({ deckId: deck.id, front: input.front, back: input.back })
+		.values({ deckId: deck.id, front: values.front, back: values.back })
 		.returning();
 
 	return card;
@@ -46,11 +49,13 @@ export async function updateCard(
 	cardId: number,
 	input: { front: string; back: string },
 ) {
+	const values = updateCardSchema.parse({ id: cardId, ...input });
+
 	const [card] = await db
 		.update(cards)
-		.set({ front: input.front, back: input.back })
+		.set({ front: values.front, back: values.back })
 		.where(
-			and(eq(cards.id, cardId), inArray(cards.deckId, ownedDeckIds(userId))),
+			and(eq(cards.id, values.id), inArray(cards.deckId, ownedDeckIds(userId))),
 		)
 		.returning();
 

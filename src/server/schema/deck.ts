@@ -1,16 +1,25 @@
 import { z } from "zod";
 import { cardSchema } from "#/server/schema/card";
 
+export const DECK_NAME_MAX_LENGTH = 50;
+export const DECK_DESCRIPTION_MAX_LENGTH = 100;
+
 export const deckNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Name is required")
-	.max(100, "Name must be 100 characters or less");
+	.max(
+		DECK_NAME_MAX_LENGTH,
+		`Name must be ${DECK_NAME_MAX_LENGTH} characters or less`,
+	);
 
 export const deckDescriptionSchema = z
 	.string()
 	.trim()
-	.max(500, "Description must be 500 characters or less");
+	.max(
+		DECK_DESCRIPTION_MAX_LENGTH,
+		`Description must be ${DECK_DESCRIPTION_MAX_LENGTH} characters or less`,
+	);
 
 export const deckSchema = z.object({
 	id: z.number().int(),

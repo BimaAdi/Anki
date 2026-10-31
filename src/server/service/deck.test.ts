@@ -55,6 +55,25 @@ describe("createDeck", () => {
 		expect(created.description).toBeNull();
 	});
 
+	it("rejects a name longer than 50 characters", async () => {
+		await expect(
+			createDeck("user-1", { name: "a".repeat(51), description: "" }),
+		).rejects.toThrow("Name must be 50 characters or less");
+
+		await expect(db.select().from(decks)).resolves.toEqual([]);
+	});
+
+	it("rejects a description longer than 100 characters", async () => {
+		await expect(
+			createDeck("user-1", {
+				name: "Spanish",
+				description: "a".repeat(101),
+			}),
+		).rejects.toThrow("Description must be 100 characters or less");
+
+		await expect(db.select().from(decks)).resolves.toEqual([]);
+	});
+
 	it("stops creating decks once the user's deck limit is reached", async () => {
 		await db.update(user).set({ deckLimit: 2 }).where(eq(user.id, "user-1"));
 
@@ -166,6 +185,37 @@ describe("updateDeck", () => {
 			name: "New",
 			description: "Updated",
 		});
+	});
+
+	it("rejects a name longer than 50 characters and leaves the deck unchanged", async () => {
+		const deck = await createDeck("user-1", { name: "Old", description: "" });
+
+		await expect(
+			updateDeck("user-1", deck.id, {
+				name: "a".repeat(51),
+				description: "",
+			}),
+		).rejects.toThrow("Name must be 50 characters or less");
+
+		const [row] = await db.select().from(decks).where(eq(decks.id, deck.id));
+		expect(row.name).toBe("Old");
+	});
+
+	it("rejects a description longer than 100 characters and leaves the deck unchanged", async () => {
+		const deck = await createDeck("user-1", {
+			name: "Deck",
+			description: "Keep",
+		});
+
+		await expect(
+			updateDeck("user-1", deck.id, {
+				name: "Deck",
+				description: "a".repeat(101),
+			}),
+		).rejects.toThrow("Description must be 100 characters or less");
+
+		const [row] = await db.select().from(decks).where(eq(decks.id, deck.id));
+		expect(row.description).toBe("Keep");
 	});
 
 	it("returns null and leaves the deck unchanged when it belongs to another user", async () => {

@@ -3,8 +3,14 @@ import { useId } from "react";
 
 import { ActionButton } from "#/client/component/shared/ActionButton";
 import { Button } from "#/client/component/shared/Button";
+import { CharacterCount } from "#/client/component/shared/CharacterCount";
 import { Textarea } from "#/client/component/shared/Textarea";
-import { cardSideSchema } from "#/server/schema/card";
+import {
+	CARD_BACK_MAX_LENGTH,
+	CARD_FRONT_MAX_LENGTH,
+	cardBackSchema,
+	cardFrontSchema,
+} from "#/server/schema/card";
 
 export type CardFormValues = {
 	front: string;
@@ -19,8 +25,20 @@ type CardFormProps = {
 };
 
 const sides = [
-	{ name: "front", label: "Front", placeholder: "Question or prompt" },
-	{ name: "back", label: "Back", placeholder: "Answer" },
+	{
+		name: "front",
+		label: "Front",
+		placeholder: "Question or prompt",
+		schema: cardFrontSchema,
+		maxLength: CARD_FRONT_MAX_LENGTH,
+	},
+	{
+		name: "back",
+		label: "Back",
+		placeholder: "Answer",
+		schema: cardBackSchema,
+		maxLength: CARD_BACK_MAX_LENGTH,
+	},
 ] as const;
 
 function fieldErrorMessage(error: unknown) {
@@ -74,21 +92,27 @@ export function CardForm({
 				<form.Field
 					key={side.name}
 					name={side.name}
-					validators={{ onChange: cardSideSchema }}
+					validators={{ onChange: side.schema }}
 				>
 					{(field) => (
 						<div className="flex flex-col">
-							<label
-								className="mb-2 text-xs font-[650] text-auth-ink-soft"
-								htmlFor={`${idPrefix}-${field.name}`}
-							>
-								{side.label}
-							</label>
+							<div className="mb-2 flex items-baseline justify-between gap-3">
+								<label
+									className="text-xs font-[650] text-auth-ink-soft"
+									htmlFor={`${idPrefix}-${field.name}`}
+								>
+									{side.label}
+								</label>
+								<CharacterCount
+									current={field.state.value.length}
+									max={side.maxLength}
+								/>
+							</div>
 							<Textarea
 								id={`${idPrefix}-${field.name}`}
 								name={field.name}
 								placeholder={side.placeholder}
-								maxLength={2000}
+								maxLength={side.maxLength}
 								rows={2}
 								value={field.state.value}
 								onBlur={field.handleBlur}
