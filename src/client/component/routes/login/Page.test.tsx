@@ -8,9 +8,9 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { emailSignIn, githubSignIn, navigate } = vi.hoisted(() => ({
+const { emailSignIn, socialSignIn, navigate } = vi.hoisted(() => ({
 	emailSignIn: vi.fn(),
-	githubSignIn: vi.fn(),
+	socialSignIn: vi.fn(),
 	navigate: vi.fn(),
 }));
 
@@ -24,7 +24,7 @@ vi.mock("#/client/lib/auth-client", () => ({
 	authClient: {
 		signIn: {
 			email: emailSignIn,
-			social: githubSignIn,
+			social: socialSignIn,
 		},
 	},
 }));
@@ -37,7 +37,7 @@ describe("login page", () => {
 		vi.clearAllMocks();
 	});
 
-	it("offers GitHub and email sign-in without public email signup", () => {
+	it("offers Google, GitHub, and email sign-in without public email signup", () => {
 		render(<Page />);
 
 		expect(
@@ -46,6 +46,9 @@ describe("login page", () => {
 		expect(screen.getByRole("link", { name: "Anki home" })).toBeTruthy();
 		expect(
 			screen.getByRole("heading", { name: "Sign in to Anki" }),
+		).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: "Continue with Google" }),
 		).toBeTruthy();
 		expect(
 			screen.getByRole("button", { name: "Continue with GitHub" }),
@@ -58,8 +61,24 @@ describe("login page", () => {
 		expect(screen.queryByRole("link", { name: /sign up/i })).toBeNull();
 	});
 
+	it("starts Google sign-in with the dashboard callback", async () => {
+		socialSignIn.mockResolvedValue({ data: null, error: null });
+		render(<Page />);
+
+		fireEvent.click(
+			screen.getByRole("button", { name: "Continue with Google" }),
+		);
+
+		await waitFor(() =>
+			expect(socialSignIn).toHaveBeenCalledWith({
+				provider: "google",
+				callbackURL: "/dashboard",
+			}),
+		);
+	});
+
 	it("starts GitHub sign-in with the dashboard callback", async () => {
-		githubSignIn.mockResolvedValue({ data: null, error: null });
+		socialSignIn.mockResolvedValue({ data: null, error: null });
 		render(<Page />);
 
 		fireEvent.click(
@@ -67,7 +86,7 @@ describe("login page", () => {
 		);
 
 		await waitFor(() =>
-			expect(githubSignIn).toHaveBeenCalledWith({
+			expect(socialSignIn).toHaveBeenCalledWith({
 				provider: "github",
 				callbackURL: "/dashboard",
 			}),

@@ -7,10 +7,11 @@ import { Input } from "#/client/component/shared/Input";
 import { authClient } from "#/client/lib/auth-client";
 
 import { GitHubMark } from "./GitHubMark";
+import { GoogleMark } from "./GoogleMark";
 
 export function RightSection() {
 	const navigate = useNavigate();
-	const [pending, setPending] = useState<"github" | null>(null);
+	const [pending, setPending] = useState<"google" | "github" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const form = useForm({
 		defaultValues: {
@@ -40,23 +41,25 @@ export function RightSection() {
 		},
 	});
 
-	async function signInWithGitHub() {
-		setPending("github");
+	async function signInWithSocialProvider(provider: "google" | "github") {
+		setPending(provider);
 		setError(null);
 
 		try {
 			const result = await authClient.signIn.social({
-				provider: "github",
+				provider,
 				callbackURL: "/dashboard",
 			});
 			if (result.error) {
 				setError(
 					result.error.message ??
-						"GitHub sign-in is unavailable. Please try again.",
+						`${provider === "google" ? "Google" : "GitHub"} sign-in is unavailable. Please try again.`,
 				);
 			}
 		} catch {
-			setError("GitHub sign-in is unavailable. Please try again.");
+			setError(
+				`${provider === "google" ? "Google" : "GitHub"} sign-in is unavailable. Please try again.`,
+			);
 		} finally {
 			setPending(null);
 		}
@@ -94,17 +97,30 @@ export function RightSection() {
 
 				<form.Subscribe selector={(state) => state.isSubmitting}>
 					{(isSubmitting) => (
-						<Button
-							variant="secondary"
-							type="button"
-							onClick={signInWithGitHub}
-							disabled={pending !== null || isSubmitting}
-						>
-							<GitHubMark />
-							{pending === "github"
-								? "Connecting to GitHub…"
-								: "Continue with GitHub"}
-						</Button>
+						<div className="flex flex-col gap-3">
+							<Button
+								variant="secondary"
+								type="button"
+								onClick={() => signInWithSocialProvider("google")}
+								disabled={pending !== null || isSubmitting}
+							>
+								<GoogleMark />
+								{pending === "google"
+									? "Connecting to Google…"
+									: "Continue with Google"}
+							</Button>
+							<Button
+								variant="secondary"
+								type="button"
+								onClick={() => signInWithSocialProvider("github")}
+								disabled={pending !== null || isSubmitting}
+							>
+								<GitHubMark />
+								{pending === "github"
+									? "Connecting to GitHub…"
+									: "Continue with GitHub"}
+							</Button>
+						</div>
 					)}
 				</form.Subscribe>
 

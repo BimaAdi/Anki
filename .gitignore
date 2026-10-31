@@ -14,4 +14,5 @@ todos.json
 *.db
 opencode.json
 docker-compose.yml
+tools/
 
