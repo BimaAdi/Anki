@@ -104,6 +104,12 @@ describe("deck page", () => {
 		vi.restoreAllMocks();
 	});
 
+	it("shows the sign out button in the navbar", () => {
+		renderPage();
+
+		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
+	});
+
 	it("shows the deck and its cards", () => {
 		renderPage();
 
@@ -125,6 +131,18 @@ describe("deck page", () => {
 		expect(
 			screen.getByRole("link", { name: "Edit deck" }).getAttribute("href"),
 		).toBe("/deck/1/edit");
+	});
+
+	it("orders deck actions as play, edit, delete, then back to all decks", () => {
+		renderPage();
+
+		const allDecks = screen.getByRole("link", { name: "Back to all decks" });
+		expect(allDecks.getAttribute("href")).toBe("/dashboard");
+
+		const actionRow = allDecks.parentElement as HTMLElement;
+		expect(
+			Array.from(actionRow.children).map((action) => action.textContent),
+		).toEqual(["Play deck", "Edit deck", "Delete deck", "Back to all decks"]);
 	});
 
 	it("shows an empty state when the deck has no cards", () => {
@@ -168,6 +186,30 @@ describe("deck page", () => {
 			"",
 		);
 		expect(screen.queryByText("This side is required")).toBeNull();
+	});
+
+	it("shows the newly added card as the first item", async () => {
+		const created = { id: 12, deckId: 1, front: "casa", back: "house" };
+		vi.mocked(createCard).mockResolvedValue(created);
+		vi.mocked(getDeck).mockResolvedValue({
+			...deck,
+			cards: [...deck.cards, created],
+		});
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Front"), {
+			target: { value: "casa" },
+		});
+		fireEvent.change(screen.getByLabelText("Back"), {
+			target: { value: "house" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
+
+		await screen.findByText("house");
+		const fronts = screen
+			.getAllByText(/^(casa|hola|adios)$/)
+			.map((element) => element.textContent);
+		expect(fronts).toEqual(["casa", "adios", "hola"]);
 	});
 
 	it("does not add a card when a side is blank", async () => {

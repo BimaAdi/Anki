@@ -4,7 +4,7 @@ import { useState } from "react";
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
 import { AppLayout } from "#/client/component/shared/AppLayout";
 import { Button } from "#/client/component/shared/Button";
-import { formatCardCount, pickRandomCard } from "#/client/lib/deck";
+import { getCardTextSize, pickRandomCard } from "#/client/lib/deck";
 import type { DeckDetail } from "#/server/schema/deck";
 
 export function Page({ deck }: { deck: DeckDetail }) {
@@ -17,45 +17,55 @@ export function Page({ deck }: { deck: DeckDetail }) {
 	}
 
 	return (
-		<AppLayout
-			actions={
-				<Link
-					to="/deck/$id"
-					params={{ id: String(deck.id) }}
-					className={actionButtonClassName("secondary")}
-				>
-					Back to deck
-				</Link>
-			}
-		>
+		<AppLayout>
 			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[680px]">
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Playing
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(32px,5vw,48px)] font-semibold tracking-[-0.075em] [overflow-wrap:anywhere]">
-					{deck.name}
-				</h1>
-				<p className="m-0 text-sm text-auth-muted">
-					{formatCardCount(deck.cards.length)} in this deck
-				</p>
+				<div className="flex items-center justify-between gap-4">
+					<div className="min-w-0">
+						<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
+							Playing
+						</p>
+						<h1 className="mt-[13px] mb-[9px] text-[clamp(32px,5vw,48px)] font-semibold tracking-[-0.075em] [overflow-wrap:anywhere]">
+							{deck.name}
+						</h1>
+					</div>
+					<Link
+						to="/deck/$id"
+						params={{ id: String(deck.id) }}
+						className={`${actionButtonClassName("secondary")} shrink-0`}
+					>
+						Back to deck
+					</Link>
+				</div>
 
 				{card ? (
 					<>
-						<div className="mt-8 flex min-h-[300px] flex-col rounded-xl border border-auth-line bg-[#fffefa] p-[32px] max-[700px]:p-[24px]">
-							<p className="m-0 mb-4 text-[11px] font-bold tracking-[0.12em] text-[#808c83] uppercase">
-								Front
-							</p>
-							<p className="m-0 text-[28px] leading-[1.35] font-[550] tracking-[-0.04em] whitespace-pre-wrap text-auth-ink [overflow-wrap:anywhere]">
-								{card.front}
-							</p>
+						<div className="mt-8 flex min-h-[360px] flex-col rounded-xl border border-auth-line bg-[#fffefa] p-[32px] max-[700px]:p-[24px]">
+							<div className="flex flex-1 flex-col">
+								<p className="m-0 text-center text-[11px] font-bold tracking-[0.12em] text-[#808c83] uppercase">
+									Front
+								</p>
+								<div className="flex flex-1 items-center justify-center py-4">
+									<p
+										className="m-0 max-w-full text-center leading-[1.25] font-[550] tracking-[-0.04em] whitespace-pre-wrap text-auth-ink [overflow-wrap:anywhere]"
+										style={{ fontSize: `${getCardTextSize(card.front)}px` }}
+									>
+										{card.front}
+									</p>
+								</div>
+							</div>
 							{showAnswer ? (
-								<div className="mt-8 border-t border-auth-line pt-6">
-									<p className="m-0 mb-3 text-[11px] font-bold tracking-[0.12em] text-[#808c83] uppercase">
+								<div className="mt-6 flex flex-1 flex-col border-t border-auth-line pt-6">
+									<p className="m-0 text-center text-[11px] font-bold tracking-[0.12em] text-[#808c83] uppercase">
 										Back
 									</p>
-									<p className="m-0 text-[20px] leading-[1.5] whitespace-pre-wrap text-auth-ink-soft [overflow-wrap:anywhere]">
-										{card.back}
-									</p>
+									<div className="flex flex-1 items-center justify-center py-4">
+										<p
+											className="m-0 max-w-full text-center leading-[1.25] font-[550] tracking-[-0.04em] whitespace-pre-wrap text-auth-ink-soft [overflow-wrap:anywhere]"
+											style={{ fontSize: `${getCardTextSize(card.back)}px` }}
+										>
+											{card.back}
+										</p>
+									</div>
 								</div>
 							) : null}
 						</div>

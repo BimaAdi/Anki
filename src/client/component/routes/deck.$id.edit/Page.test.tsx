@@ -74,6 +74,12 @@ describe("edit deck page", () => {
 		vi.clearAllMocks();
 	});
 
+	it("shows the sign out button in the navbar", () => {
+		renderPage();
+
+		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
+	});
+
 	it("pre-fills the form with the current deck", () => {
 		renderPage();
 

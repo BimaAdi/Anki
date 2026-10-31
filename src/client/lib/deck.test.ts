@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatCardCount, pickRandomCard } from "./deck";
+import { formatCardCount, getCardTextSize, pickRandomCard } from "./deck";
 
 const cards = [
 	{ id: 1, front: "a" },
@@ -15,6 +15,29 @@ describe("formatCardCount", () => {
 	it("uses the plural otherwise", () => {
 		expect(formatCardCount(0)).toBe("0 cards");
 		expect(formatCardCount(2)).toBe("2 cards");
+	});
+});
+
+describe("getCardTextSize", () => {
+	it("uses the largest size for short text", () => {
+		expect(getCardTextSize("hola")).toBe(64);
+	});
+
+	it("gets smaller as the text gets longer", () => {
+		expect(getCardTextSize("a".repeat(12))).toBe(64);
+		expect(getCardTextSize("a".repeat(13))).toBe(48);
+		expect(getCardTextSize("a".repeat(30))).toBe(48);
+		expect(getCardTextSize("a".repeat(31))).toBe(36);
+		expect(getCardTextSize("a".repeat(60))).toBe(36);
+		expect(getCardTextSize("a".repeat(61))).toBe(28);
+		expect(getCardTextSize("a".repeat(120))).toBe(28);
+		expect(getCardTextSize("a".repeat(121))).toBe(22);
+		expect(getCardTextSize("a".repeat(200))).toBe(22);
+		expect(getCardTextSize("a".repeat(201))).toBe(18);
+	});
+
+	it("counts characters instead of UTF-16 code units", () => {
+		expect(getCardTextSize("😀".repeat(12))).toBe(64);
 	});
 });
 

@@ -69,6 +69,12 @@ describe("create deck page", () => {
 		expect(screen.getByRole("button", { name: "Create deck" })).toBeTruthy();
 	});
 
+	it("shows the sign out button in the navbar", () => {
+		renderPage();
+
+		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
+	});
+
 	it("creates the deck with trimmed values and opens it", async () => {
 		vi.mocked(createDeck).mockResolvedValue({
 			id: 7,

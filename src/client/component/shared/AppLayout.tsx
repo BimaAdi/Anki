@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { SignOutButton } from "./SignOutButton";
+
 type AppLayoutProps = {
 	actions?: ReactNode;
 	children: ReactNode;
@@ -22,7 +24,10 @@ export function AppLayout({ actions, children }: AppLayoutProps) {
 					</span>
 					<span>Anki</span>
 				</a>
-				{actions}
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					{actions}
+					<SignOutButton />
+				</div>
 			</header>
 			{children}
 		</main>

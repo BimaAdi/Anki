@@ -38,6 +38,8 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 		initialData: initialDeck,
 	});
 
+	const cardsNewestFirst = [...deck.cards].sort((a, b) => b.id - a.id);
+
 	function refreshDeck() {
 		void queryClient.invalidateQueries({ queryKey: deckQueryKey(deckId) });
 		void queryClient.invalidateQueries({ queryKey: decksQueryKey });
@@ -94,13 +96,7 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	}
 
 	return (
-		<AppLayout
-			actions={
-				<Link to="/dashboard" className={actionButtonClassName("secondary")}>
-					All decks
-				</Link>
-			}
-		>
+		<AppLayout>
 			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[760px]">
 				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
 					Deck
@@ -135,6 +131,9 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					>
 						{removeDeck.isPending ? "Deleting…" : "Delete deck"}
 					</ActionButton>
+					<Link to="/dashboard" className={actionButtonClassName("secondary")}>
+						Back to all decks
+					</Link>
 				</div>
 				{error ? (
 					<p
@@ -183,7 +182,7 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					</p>
 				) : (
 					<ul className="mt-6 flex flex-col gap-3">
-						{deck.cards.map((card) => (
+						{cardsNewestFirst.map((card) => (
 							<CardItem
 								key={card.id}
 								card={card}

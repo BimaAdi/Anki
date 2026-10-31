@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
 import { AppLayout } from "#/client/component/shared/AppLayout";
-import { authClient } from "#/client/lib/auth-client";
 import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
 import type { DeckSummary } from "#/server/schema/deck";
 import { listDecks } from "#/server/serverFn/deck";
@@ -19,55 +17,14 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ user, initialDecks }: DashboardPageProps) {
-	const navigate = useNavigate();
-	const [signingOut, setSigningOut] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const { data: decks } = useQuery({
 		queryKey: decksQueryKey,
 		queryFn: () => listDecks(),
 		initialData: initialDecks,
 	});
 
-	async function signOut() {
-		setSigningOut(true);
-		setError(null);
-		try {
-			const result = await authClient.signOut();
-			if (result.error) {
-				setError(
-					result.error.message ?? "We couldn't sign you out. Please try again.",
-				);
-				return;
-			}
-			await navigate({ to: "/login" });
-		} catch {
-			setError("We couldn't sign you out. Please try again.");
-		} finally {
-			setSigningOut(false);
-		}
-	}
-
 	return (
-		<AppLayout
-			actions={
-				<button
-					className="cursor-pointer rounded-[7px] border border-auth-line bg-transparent px-[13px] py-[9px] text-xs font-semibold text-auth-ink-soft hover:border-[#bdc4b9] disabled:cursor-wait disabled:opacity-70"
-					type="button"
-					onClick={signOut}
-					disabled={signingOut}
-				>
-					{signingOut ? "Signing out…" : "Sign out"}
-				</button>
-			}
-		>
-			{error ? (
-				<p
-					className="mx-auto mt-5 mb-0 max-w-[1120px] text-xs leading-[1.5] text-auth-error"
-					role="alert"
-				>
-					{error}
-				</p>
-			) : null}
+		<AppLayout>
 			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[760px]">
 				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
 					Your study space
@@ -129,13 +86,22 @@ export function DashboardPage({ user, initialDecks }: DashboardPageProps) {
 									<span className="text-xs font-semibold text-auth-muted">
 										{formatCardCount(deck.cardCount)}
 									</span>
-									<Link
-										to="/deck/$id/play"
-										params={{ id: String(deck.id) }}
-										className={actionButtonClassName("primary")}
-									>
-										Play
-									</Link>
+									<div className="flex items-center gap-2">
+										<Link
+											to="/deck/$id"
+											params={{ id: String(deck.id) }}
+											className={actionButtonClassName("secondary")}
+										>
+											Edit
+										</Link>
+										<Link
+											to="/deck/$id/play"
+											params={{ id: String(deck.id) }}
+											className={actionButtonClassName("primary")}
+										>
+											Play
+										</Link>
+									</div>
 								</div>
 							</li>
 						))}

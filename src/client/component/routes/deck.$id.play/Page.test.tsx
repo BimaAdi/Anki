@@ -26,6 +26,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 				{ href: to.replace("$id", params?.id ?? ""), className },
 				children,
 			),
+		useNavigate: () => vi.fn(),
 	};
 });
 
@@ -47,6 +48,20 @@ describe("play page", () => {
 		vi.restoreAllMocks();
 	});
 
+	it("shows the sign out button in the navbar", () => {
+		render(<Page deck={deck} />);
+
+		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
+	});
+
+	it("links back to the deck from the header", () => {
+		render(<Page deck={deck} />);
+
+		expect(
+			screen.getByRole("link", { name: "Back to deck" }).getAttribute("href"),
+		).toBe("/deck/1");
+	});
+
 	it("explains how to start when the deck is empty", () => {
 		render(<Page deck={{ ...deck, cards: [] }} />);
 
@@ -65,12 +80,30 @@ describe("play page", () => {
 
 		expect(screen.getByText("hola")).toBeTruthy();
 		expect(screen.queryByText("hello")).toBeNull();
-		expect(screen.getByText("2 cards in this deck")).toBeTruthy();
 
 		fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
 
 		expect(screen.getByText("hello")).toBeTruthy();
 		expect(screen.queryByRole("button", { name: "Show answer" })).toBeNull();
+	});
+
+	it("uses a larger font for short text than for long text", () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const longText = "a".repeat(250);
+		render(
+			<Page
+				deck={{
+					...deck,
+					cards: [{ id: 10, deckId: 1, front: "hola", back: longText }],
+				}}
+			/>,
+		);
+
+		expect(screen.getByText("hola").style.fontSize).toBe("64px");
+
+		fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+		expect(screen.getByText(longText).style.fontSize).toBe("18px");
 	});
 
 	it("moves to a different card and hides the answer on next card", () => {
