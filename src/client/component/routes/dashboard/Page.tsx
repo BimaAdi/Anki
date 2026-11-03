@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
 import { AppLayout } from "#/client/component/shared/AppLayout";
+import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
 import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
 import type { DeckSummary } from "#/server/schema/deck";
 import type { UserLimits } from "#/server/schema/user";
@@ -33,6 +34,7 @@ export function DashboardPage({
 	return (
 		<AppLayout>
 			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[760px]">
+				<Breadcrumbs items={[{ label: "Dashboard" }]} />
 				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
 					Your study space
 				</p>
@@ -44,7 +46,7 @@ export function DashboardPage({
 
 			<section
 				aria-labelledby="decks-title"
-				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[1120px]"
+				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[760px]"
 			>
 				<div className="flex items-end justify-between gap-4 border-b border-auth-line pb-3">
 					<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

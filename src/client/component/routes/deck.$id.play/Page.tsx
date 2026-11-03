@@ -18,7 +18,7 @@ export function Page({ deck }: { deck: DeckDetail }) {
 
 	return (
 		<AppLayout>
-			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[680px]">
+			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[760px]">
 				<div className="flex items-center justify-between gap-4">
 					<div className="min-w-0">
 						<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
@@ -28,13 +28,21 @@ export function Page({ deck }: { deck: DeckDetail }) {
 							{deck.name}
 						</h1>
 					</div>
-					<Link
-						to="/deck/$id"
-						params={{ id: String(deck.id) }}
-						className={`${actionButtonClassName("secondary")} shrink-0`}
-					>
-						Back to deck
-					</Link>
+					<div className="flex flex-wrap justify-end gap-2">
+						<Link
+							to="/deck/$id"
+							params={{ id: String(deck.id) }}
+							className={actionButtonClassName("secondary")}
+						>
+							Edit deck
+						</Link>
+						<Link
+							to="/dashboard"
+							className={actionButtonClassName("secondary")}
+						>
+							Go to dashboard
+						</Link>
+					</div>
 				</div>
 
 				{card ? (

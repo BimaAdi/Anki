@@ -7,6 +7,7 @@ import {
 	actionButtonClassName,
 } from "#/client/component/shared/ActionButton";
 import { AppLayout } from "#/client/component/shared/AppLayout";
+import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
 import {
 	deckQueryKey,
 	decksQueryKey,
@@ -99,6 +100,12 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	return (
 		<AppLayout>
 			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[760px]">
+				<Breadcrumbs
+					items={[
+						{ label: "Dashboard", href: "/dashboard" },
+						{ label: deck.name },
+					]}
+				/>
 				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
 					Deck
 				</p>
@@ -132,9 +139,6 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					>
 						{removeDeck.isPending ? "Deleting…" : "Delete deck"}
 					</ActionButton>
-					<Link to="/dashboard" className={actionButtonClassName("secondary")}>
-						Back to all decks
-					</Link>
 				</div>
 				{error ? (
 					<p

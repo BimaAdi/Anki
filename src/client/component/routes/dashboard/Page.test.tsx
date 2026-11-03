@@ -83,6 +83,11 @@ describe("dashboard page", () => {
 	it("welcomes the authenticated user", () => {
 		renderPage();
 
+		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		expect(screen.getByText("Dashboard").getAttribute("aria-current")).toBe(
+			"page",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Welcome, Anki User." }),
 		).toBeTruthy();
@@ -122,6 +127,11 @@ describe("dashboard page", () => {
 		renderPage([{ id: 1, name: "Spanish", description: null, cardCount: 2 }]);
 
 		expect(screen.getByText("1 / 10 decks")).toBeTruthy();
+		expect(
+			screen
+				.getByRole("region", { name: "Your decks" })
+				.classList.contains("max-w-[760px]"),
+		).toBe(true);
 	});
 
 	it("hides the new deck link and explains when the deck limit is reached", () => {

@@ -134,16 +134,27 @@ describe("deck page", () => {
 		).toBe("/deck/1/edit");
 	});
 
-	it("orders deck actions as play, edit, delete, then back to all decks", () => {
+	it("shows a breadcrumb back to the dashboard", () => {
 		renderPage();
 
-		const allDecks = screen.getByRole("link", { name: "Back to all decks" });
-		expect(allDecks.getAttribute("href")).toBe("/dashboard");
+		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		const dashboard = within(breadcrumb).getByRole("link", {
+			name: "Dashboard",
+		});
+		expect(dashboard.getAttribute("href")).toBe("/dashboard");
+		expect(
+			within(breadcrumb).getByText("Spanish").getAttribute("aria-current"),
+		).toBe("page");
+		expect(
+			screen.queryByRole("link", { name: "Back to all decks" }),
+		).toBeNull();
 
-		const actionRow = allDecks.parentElement as HTMLElement;
+		const actionRow = screen.getByRole("button", { name: "Delete deck" })
+			.parentElement as HTMLElement;
 		expect(
 			Array.from(actionRow.children).map((action) => action.textContent),
-		).toEqual(["Play deck", "Edit deck", "Delete deck", "Back to all decks"]);
+		).toEqual(["Play deck", "Edit deck", "Delete deck"]);
 	});
 
 	it("shows an empty state when the deck has no cards", () => {
