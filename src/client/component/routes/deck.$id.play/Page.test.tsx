@@ -55,12 +55,26 @@ describe("play page", () => {
 		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
 	});
 
-	it("links back to the deck from the header", () => {
+	it("uses the shared 760px content width", () => {
+		render(<Page deck={deck} />);
+
+		const heading = screen.getByRole("heading", { name: "Spanish" });
+		expect(
+			heading.closest("section")?.classList.contains("max-w-[760px]"),
+		).toBe(true);
+	});
+
+	it("links to edit the deck and dashboard from the header", () => {
 		render(<Page deck={deck} />);
 
 		expect(
-			screen.getByRole("link", { name: "Back to deck" }).getAttribute("href"),
+			screen.getByRole("link", { name: "Edit deck" }).getAttribute("href"),
 		).toBe("/deck/1");
+		expect(
+			screen
+				.getByRole("link", { name: "Go to dashboard" })
+				.getAttribute("href"),
+		).toBe("/dashboard");
 	});
 
 	it("explains how to start when the deck is empty", () => {
