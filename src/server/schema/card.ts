@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const CARD_FRONT_MAX_LENGTH = 150;
-export const CARD_BACK_MAX_LENGTH = 250;
+export const CARD_FRONT_MAX_LENGTH = 500;
+export const CARD_BACK_MAX_LENGTH = 500;
 
 export const cardFrontSchema = z
 	.string()

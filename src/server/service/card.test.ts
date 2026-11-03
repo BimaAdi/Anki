@@ -45,28 +45,38 @@ describe("createCard", () => {
 		expect(rows).toEqual([expect.objectContaining({ front: "hola" })]);
 	});
 
-	it("rejects a front longer than 150 characters", async () => {
+	it("accepts 500 characters on both sides", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		const front = "f".repeat(500);
+		const back = "b".repeat(500);
+
+		const created = await createCard("user-1", deck.id, { front, back });
+
+		expect(created).toMatchObject({ front, back });
+	});
+
+	it("rejects a front longer than 500 characters", async () => {
 		const deck = await createDeck("user-1", { name: "Deck", description: "" });
 
 		await expect(
 			createCard("user-1", deck.id, {
-				front: "a".repeat(151),
+				front: "a".repeat(501),
 				back: "answer",
 			}),
-		).rejects.toThrow("Front must be 150 characters or less");
+		).rejects.toThrow("Front must be 500 characters or less");
 
 		await expect(db.select().from(cards)).resolves.toEqual([]);
 	});
 
-	it("rejects a back longer than 250 characters", async () => {
+	it("rejects a back longer than 500 characters", async () => {
 		const deck = await createDeck("user-1", { name: "Deck", description: "" });
 
 		await expect(
 			createCard("user-1", deck.id, {
 				front: "question",
-				back: "a".repeat(251),
+				back: "a".repeat(501),
 			}),
-		).rejects.toThrow("Back must be 250 characters or less");
+		).rejects.toThrow("Back must be 500 characters or less");
 
 		await expect(db.select().from(cards)).resolves.toEqual([]);
 	});
@@ -154,7 +164,7 @@ describe("updateCard", () => {
 		});
 	});
 
-	it("rejects a front longer than 150 characters and leaves the card unchanged", async () => {
+	it("rejects a front longer than 500 characters and leaves the card unchanged", async () => {
 		const deck = await createDeck("user-1", { name: "Deck", description: "" });
 		const card = await createCard("user-1", deck.id, {
 			front: "keep",
@@ -163,10 +173,10 @@ describe("updateCard", () => {
 
 		await expect(
 			updateCard("user-1", card?.id ?? 0, {
-				front: "a".repeat(151),
+				front: "a".repeat(501),
 				back: "keep",
 			}),
-		).rejects.toThrow("Front must be 150 characters or less");
+		).rejects.toThrow("Front must be 500 characters or less");
 
 		const [row] = await db
 			.select()
@@ -175,7 +185,7 @@ describe("updateCard", () => {
 		expect(row.front).toBe("keep");
 	});
 
-	it("rejects a back longer than 250 characters and leaves the card unchanged", async () => {
+	it("rejects a back longer than 500 characters and leaves the card unchanged", async () => {
 		const deck = await createDeck("user-1", { name: "Deck", description: "" });
 		const card = await createCard("user-1", deck.id, {
 			front: "keep",
@@ -185,9 +195,9 @@ describe("updateCard", () => {
 		await expect(
 			updateCard("user-1", card?.id ?? 0, {
 				front: "keep",
-				back: "a".repeat(251),
+				back: "a".repeat(501),
 			}),
-		).rejects.toThrow("Back must be 250 characters or less");
+		).rejects.toThrow("Back must be 500 characters or less");
 
 		const [row] = await db
 			.select()
