@@ -161,11 +161,16 @@ describe("deck page", () => {
 		expect(screen.getByText("Limit 100")).toBeTruthy();
 	});
 
-	it("shows the character count and limit for each card side", () => {
+	it("shows the 500-character count and limit for each card side", () => {
 		renderPage();
 
-		expect(screen.getByText("0/150")).toBeTruthy();
-		expect(screen.getByText("0/250")).toBeTruthy();
+		expect(screen.getAllByText("0/500")).toHaveLength(2);
+		expect(
+			(screen.getByLabelText("Front") as HTMLTextAreaElement).maxLength,
+		).toBe(500);
+		expect(
+			(screen.getByLabelText("Back") as HTMLTextAreaElement).maxLength,
+		).toBe(500);
 	});
 
 	it("updates the card counters as the user types", () => {
@@ -178,15 +183,15 @@ describe("deck page", () => {
 			target: { value: "hello" },
 		});
 
-		expect(screen.getByText("4/150")).toBeTruthy();
-		expect(screen.getByText("5/250")).toBeTruthy();
+		expect(screen.getAllByText("4/500")).toHaveLength(1);
+		expect(screen.getAllByText("5/500")).toHaveLength(1);
 	});
 
-	it("does not add a card when the front exceeds 150 characters", async () => {
+	it("does not add a card when the front exceeds 500 characters", async () => {
 		renderPage();
 
 		fireEvent.change(screen.getByLabelText("Front"), {
-			target: { value: "a".repeat(151) },
+			target: { value: "a".repeat(501) },
 		});
 		fireEvent.change(screen.getByLabelText("Back"), {
 			target: { value: "answer" },
@@ -194,24 +199,24 @@ describe("deck page", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
 
 		expect(
-			await screen.findByText("Front must be 150 characters or less"),
+			await screen.findByText("Front must be 500 characters or less"),
 		).toBeTruthy();
 		expect(createCard).not.toHaveBeenCalled();
 	});
 
-	it("does not add a card when the back exceeds 250 characters", async () => {
+	it("does not add a card when the back exceeds 500 characters", async () => {
 		renderPage();
 
 		fireEvent.change(screen.getByLabelText("Front"), {
 			target: { value: "question" },
 		});
 		fireEvent.change(screen.getByLabelText("Back"), {
-			target: { value: "a".repeat(251) },
+			target: { value: "a".repeat(501) },
 		});
 		fireEvent.click(screen.getByRole("button", { name: "Add card" }));
 
 		expect(
-			await screen.findByText("Back must be 250 characters or less"),
+			await screen.findByText("Back must be 500 characters or less"),
 		).toBeTruthy();
 		expect(createCard).not.toHaveBeenCalled();
 	});
