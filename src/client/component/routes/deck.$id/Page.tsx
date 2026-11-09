@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -9,17 +14,28 @@ import {
 import { AppLayout } from "#/client/component/shared/AppLayout";
 import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
 import {
+	type CardSearchScope,
+	cardSearchQueryKey,
+} from "#/client/lib/card-search";
+import {
 	deckQueryKey,
 	decksQueryKey,
 	formatCardCount,
 } from "#/client/lib/deck";
 import { errorMessage } from "#/client/lib/error-message";
+import { useDebouncedValue } from "#/client/lib/use-debounced-value";
 import type { DeckDetail } from "#/server/schema/deck";
-import { createCard, deleteCard, updateCard } from "#/server/serverFn/card";
+import {
+	createCard,
+	deleteCard,
+	searchCards,
+	updateCard,
+} from "#/server/serverFn/card";
 import { deleteDeck, getDeck } from "#/server/serverFn/deck";
 
 import { CardForm, type CardFormValues } from "./CardForm";
 import { CardItem } from "./CardItem";
+import { CardSearch } from "./CardSearch";
 
 export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	const navigate = useNavigate();
@@ -41,6 +57,27 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 
 	const cardsNewestFirst = [...deck.cards].sort((a, b) => b.id - a.id);
 	const atCardLimit = deck.cards.length >= deck.cardLimit;
+
+	const [searchQuery, setSearchQuery] = useState("");
+	const [searchScope, setSearchScope] = useState<CardSearchScope>("both");
+	const trimmedQuery = searchQuery.trim();
+	const debouncedQuery = useDebouncedValue(trimmedQuery);
+	const searchActive = trimmedQuery.length > 0;
+	const { data: searchResults = [], isFetching: isSearchFetching } = useQuery({
+		queryKey: cardSearchQueryKey(deckId, debouncedQuery, searchScope),
+		queryFn: () =>
+			searchCards({
+				data: { deckId, query: debouncedQuery, scope: searchScope },
+			}),
+		enabled: debouncedQuery.length > 0,
+		placeholderData: keepPreviousData,
+	});
+	const isSearching =
+		searchActive && (trimmedQuery !== debouncedQuery || isSearchFetching);
+	const displayedCards = searchActive
+		? [...searchResults].sort((a, b) => b.id - a.id)
+		: cardsNewestFirst;
+	const highlightQuery = searchActive ? debouncedQuery : "";
 
 	function refreshDeck() {
 		void queryClient.invalidateQueries({ queryKey: deckQueryKey(deckId) });
@@ -198,16 +235,35 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					</div>
 				)}
 
+				<CardSearch
+					query={searchQuery}
+					scope={searchScope}
+					resultCount={searchResults.length}
+					totalCount={deck.cards.length}
+					isSearching={isSearching}
+					onQueryChange={setSearchQuery}
+					onScopeChange={setSearchScope}
+					onClear={() => setSearchQuery("")}
+				/>
+
 				{deck.cards.length === 0 ? (
 					<p className="mt-6 text-sm text-auth-muted">
 						No cards yet. Add your first card above.
 					</p>
+				) : searchActive && isSearching && displayedCards.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">Searching cards…</p>
+				) : displayedCards.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">
+						No cards match your search.
+					</p>
 				) : (
 					<ul className="mt-6 flex flex-col gap-3">
-						{cardsNewestFirst.map((card) => (
+						{displayedCards.map((card) => (
 							<CardItem
 								key={card.id}
 								card={card}
+								searchQuery={highlightQuery}
+								searchScope={searchScope}
 								onUpdate={async (values) => {
 									resetErrors();
 									await editCard.mutateAsync({ id: card.id, ...values });

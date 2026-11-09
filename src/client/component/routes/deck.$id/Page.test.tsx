@@ -12,7 +12,12 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deckQueryKey } from "#/client/lib/deck";
 import type { DeckDetail } from "#/server/schema/deck";
-import { createCard, deleteCard, updateCard } from "#/server/serverFn/card";
+import {
+	createCard,
+	deleteCard,
+	searchCards,
+	updateCard,
+} from "#/server/serverFn/card";
 import { deleteDeck, getDeck } from "#/server/serverFn/deck";
 
 const { navigate } = vi.hoisted(() => ({
@@ -48,6 +53,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 vi.mock("#/server/serverFn/card", () => ({
 	createCard: vi.fn(),
 	deleteCard: vi.fn(),
+	searchCards: vi.fn(),
 	updateCard: vi.fn(),
 }));
 
@@ -121,6 +127,120 @@ describe("deck page", () => {
 		expect(screen.getByText("hello")).toBeTruthy();
 		expect(screen.getByText("adios")).toBeTruthy();
 		expect(screen.getByText("goodbye")).toBeTruthy();
+	});
+
+	it("places the search bar between the add form and the card list", () => {
+		renderPage();
+
+		const addHeading = screen.getByRole("heading", { name: "Add a card" });
+		const search = screen.getByRole("searchbox", { name: "Search cards" });
+		const list = screen.getByText("hola").closest("ul") as HTMLElement;
+
+		expect(
+			addHeading.compareDocumentPosition(search) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+		expect(
+			search.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+	});
+
+	it("searches through the server function and shows how many match", async () => {
+		vi.mocked(searchCards).mockResolvedValue([deck.cards[0]]);
+		renderPage();
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search cards" }), {
+			target: { value: "hola" },
+		});
+
+		await waitFor(() =>
+			expect(searchCards).toHaveBeenCalledWith({
+				data: { deckId: 1, query: "hola", scope: "both" },
+			}),
+		);
+		expect(await screen.findByText("Showing 1 of 2 cards")).toBeTruthy();
+		expect(screen.getByText("hola")).toBeTruthy();
+		expect(screen.getByText("hello")).toBeTruthy();
+		expect(screen.queryByText("adios")).toBeNull();
+		expect(screen.queryByText("goodbye")).toBeNull();
+	});
+
+	it("searches the selected side through the server function", async () => {
+		vi.mocked(searchCards).mockResolvedValueOnce([]);
+		renderPage();
+
+		const scope = screen.getByLabelText("Search in") as HTMLSelectElement;
+		const search = screen.getByRole("searchbox", { name: "Search cards" });
+
+		fireEvent.change(scope, { target: { value: "front" } });
+		fireEvent.change(search, { target: { value: "hello" } });
+
+		expect(await screen.findByText("Showing 0 of 2 cards")).toBeTruthy();
+		await waitFor(() =>
+			expect(searchCards).toHaveBeenCalledWith({
+				data: { deckId: 1, query: "hello", scope: "front" },
+			}),
+		);
+		expect(screen.getByText("No cards match your search.")).toBeTruthy();
+
+		vi.mocked(searchCards).mockResolvedValueOnce([deck.cards[0]]);
+		fireEvent.change(scope, { target: { value: "back" } });
+
+		expect(await screen.findByText("Showing 1 of 2 cards")).toBeTruthy();
+		await waitFor(() =>
+			expect(searchCards).toHaveBeenCalledWith({
+				data: { deckId: 1, query: "hello", scope: "back" },
+			}),
+		);
+		expect(screen.getByText("hello")).toBeTruthy();
+		expect(screen.queryByText("adios")).toBeNull();
+	});
+
+	it("displays the cards returned by the search server function", async () => {
+		vi.mocked(searchCards).mockResolvedValue([deck.cards[1]]);
+		renderPage();
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search cards" }), {
+			target: { value: "hola" },
+		});
+
+		expect(await screen.findByText("adios")).toBeTruthy();
+		await waitFor(() => expect(screen.queryByText("hola")).toBeNull());
+		expect(screen.getByText("goodbye")).toBeTruthy();
+	});
+
+	it("underlines the matching text", async () => {
+		vi.mocked(searchCards).mockResolvedValue([deck.cards[0]]);
+		renderPage();
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search cards" }), {
+			target: { value: "hola" },
+		});
+
+		await waitFor(() => {
+			const match = screen.getByText("hola");
+			expect(match.tagName).toBe("MARK");
+			expect(match.className).toContain("underline");
+		});
+	});
+
+	it("clears the search and shows every card again", async () => {
+		vi.mocked(searchCards).mockResolvedValue([deck.cards[0]]);
+		renderPage();
+
+		const search = screen.getByRole("searchbox", {
+			name: "Search cards",
+		}) as HTMLInputElement;
+		fireEvent.change(search, { target: { value: "hola" } });
+
+		expect(await screen.findByText("Showing 1 of 2 cards")).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+
+		expect(search.value).toBe("");
+		expect(screen.getByText("adios")).toBeTruthy();
+		expect(screen.getByText("goodbye")).toBeTruthy();
+		expect(screen.queryByText(/^Showing /)).toBeNull();
 	});
 
 	it("links to play and edit the deck", () => {
