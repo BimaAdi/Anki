@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import { ActionButton } from "#/client/component/shared/ActionButton";
+import { HighlightedText } from "#/client/component/shared/HighlightedText";
 import type { CardSearchScope } from "#/client/lib/card-search";
 import type { Card } from "#/server/schema/card";
 import { CardForm, type CardFormValues } from "./CardForm";
-import { HighlightedText } from "./HighlightedText";
 
 type CardItemProps = {
 	card: Card;

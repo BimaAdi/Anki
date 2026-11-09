@@ -40,6 +40,10 @@ export const deckIdSchema = z.object({
 	id: z.number().int().positive(),
 });
 
+export const searchDecksSchema = z.object({
+	query: z.string().trim().max(DECK_NAME_MAX_LENGTH),
+});
+
 export const createDeckSchema = z.object({
 	name: deckNameSchema,
 	description: deckDescriptionSchema,

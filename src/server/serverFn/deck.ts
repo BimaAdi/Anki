@@ -6,6 +6,7 @@ import {
 	deckIdSchema,
 	deckSchema,
 	deckSummarySchema,
+	searchDecksSchema,
 	updateDeckSchema,
 } from "#/server/schema/deck";
 import * as deckService from "#/server/service/deck";
@@ -15,6 +16,15 @@ export const listDecks = createServerFn({ method: "GET" }).handler(async () => {
 	const userId = await requireUserId();
 	return z.array(deckSummarySchema).parse(await deckService.listDecks(userId));
 });
+
+export const searchDecks = createServerFn({ method: "GET" })
+	.validator(searchDecksSchema)
+	.handler(async ({ data }) => {
+		const userId = await requireUserId();
+		return z
+			.array(deckSummarySchema)
+			.parse(await deckService.searchDecks(userId, data));
+	});
 
 export const getDeck = createServerFn({ method: "GET" })
 	.validator(deckIdSchema)

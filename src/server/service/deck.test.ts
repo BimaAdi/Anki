@@ -4,7 +4,14 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "#/server/db";
 import { cards, decks, user } from "#/server/db/schema";
 import { closeTestDatabase } from "#/server/test/database";
-import { createDeck, deleteDeck, getDeck, listDecks, updateDeck } from "./deck";
+import {
+	createDeck,
+	deleteDeck,
+	getDeck,
+	listDecks,
+	searchDecks,
+	updateDeck,
+} from "./deck";
 
 vi.mock("#/server/db", async () => {
 	const { createTestDatabase } = await import("#/server/test/database");
@@ -137,6 +144,95 @@ describe("listDecks", () => {
 			expect.objectContaining({ id: first.id, name: "First", cardCount: 2 }),
 			expect.objectContaining({ id: second.id, name: "Second", cardCount: 0 }),
 		]);
+	});
+});
+
+describe("searchDecks", () => {
+	async function insertSearchDecks() {
+		const spanish = await createDeck("user-1", {
+			name: "Spanish",
+			description: "Basic verbs",
+		});
+		const math = await createDeck("user-1", {
+			name: "Math",
+			description: "Algebra and geometry",
+		});
+		await db.insert(cards).values({
+			deckId: spanish.id,
+			front: "hola",
+			back: "hello",
+		});
+
+		return { spanish, math };
+	}
+
+	it("returns every deck with card counts when the query is blank", async () => {
+		const { spanish, math } = await insertSearchDecks();
+
+		const result = await searchDecks("user-1", { query: "   " });
+
+		expect(result).toEqual([
+			expect.objectContaining({ id: spanish.id, cardCount: 1 }),
+			expect.objectContaining({ id: math.id, cardCount: 0 }),
+		]);
+	});
+
+	it("matches the title case-insensitively", async () => {
+		const { spanish } = await insertSearchDecks();
+
+		await expect(searchDecks("user-1", { query: "SPAN" })).resolves.toEqual([
+			expect.objectContaining({ id: spanish.id }),
+		]);
+	});
+
+	it("does not match the description", async () => {
+		await insertSearchDecks();
+
+		await expect(searchDecks("user-1", { query: "GEOMETRY" })).resolves.toEqual(
+			[],
+		);
+	});
+
+	it("treats percent and underscore as literal characters", async () => {
+		const percent = await createDeck("user-1", {
+			name: "100% done",
+			description: "",
+		});
+		const underscore = await createDeck("user-1", {
+			name: "under_score",
+			description: "",
+		});
+		await createDeck("user-1", { name: "Plain", description: "text" });
+
+		await expect(searchDecks("user-1", { query: "%" })).resolves.toEqual([
+			expect.objectContaining({ id: percent.id }),
+		]);
+		await expect(searchDecks("user-1", { query: "_" })).resolves.toEqual([
+			expect.objectContaining({ id: underscore.id }),
+		]);
+	});
+
+	it("only returns the user's own decks", async () => {
+		await createDeck("user-2", {
+			name: "Spanish",
+			description: "Basic verbs",
+		});
+		const own = await createDeck("user-1", {
+			name: "Spanish",
+			description: "Own deck",
+		});
+
+		await expect(searchDecks("user-1", { query: "Spanish" })).resolves.toEqual([
+			expect.objectContaining({ id: own.id }),
+		]);
+	});
+
+	it("rejects a query longer than 50 characters", async () => {
+		await expect(
+			searchDecks("user-1", {
+				query: "a".repeat(51),
+			}),
+		).rejects.toThrow();
 	});
 });
 
