@@ -6,6 +6,7 @@ import {
 	render,
 	screen,
 	waitFor,
+	within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -78,6 +79,24 @@ describe("edit deck page", () => {
 		renderPage();
 
 		expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
+	});
+
+	it("shows the shared breadcrumb and page frame", () => {
+		renderPage();
+
+		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+		const section = breadcrumb.parentElement as HTMLElement;
+		expect(section.firstElementChild).toBe(breadcrumb);
+		expect(section.classList.contains("max-w-[760px]")).toBe(true);
+		expect(
+			within(breadcrumb)
+				.getByRole("link", { name: "Dashboard" })
+				.getAttribute("href"),
+		).toBe("/dashboard");
+		expect(within(breadcrumb).getByText("Spanish")).toBeTruthy();
+		expect(
+			within(breadcrumb).getByText("Edit deck").getAttribute("aria-current"),
+		).toBe("page");
 	});
 
 	it("pre-fills the form with the current deck", () => {

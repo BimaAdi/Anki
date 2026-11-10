@@ -86,7 +86,10 @@ describe("dashboard page", () => {
 		renderPage();
 
 		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
-		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		const section = breadcrumb.parentElement as HTMLElement;
+		expect(section.firstElementChild).toBe(breadcrumb);
+		expect(section.classList.contains("mt-[clamp(48px,9vh,96px)]")).toBe(true);
+		expect(section.classList.contains("max-w-[760px]")).toBe(true);
 		expect(screen.getByText("Dashboard").getAttribute("aria-current")).toBe(
 			"page",
 		);

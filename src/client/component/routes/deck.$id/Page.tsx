@@ -11,8 +11,7 @@ import {
 	ActionButton,
 	actionButtonClassName,
 } from "#/client/component/shared/ActionButton";
-import { AppLayout } from "#/client/component/shared/AppLayout";
-import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
+import { PageLayout } from "#/client/component/shared/PageLayout";
 import {
 	type CardSearchScope,
 	cardSearchQueryKey,
@@ -135,26 +134,16 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	}
 
 	return (
-		<AppLayout>
-			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[760px]">
-				<Breadcrumbs
-					items={[
-						{ label: "Dashboard", href: "/dashboard" },
-						{ label: deck.name },
-					]}
-				/>
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Deck
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(32px,5vw,48px)] font-semibold tracking-[-0.075em] [overflow-wrap:anywhere]">
-					{deck.name}
-				</h1>
-				{deck.description ? (
-					<p className="m-0 text-sm leading-[1.6] whitespace-pre-wrap text-auth-muted">
-						{deck.description}
-					</p>
-				) : null}
-				<div className="mt-6 flex flex-wrap gap-2">
+		<PageLayout
+			breadcrumbs={[
+				{ label: "Dashboard", href: "/dashboard" },
+				{ label: deck.name },
+			]}
+			eyebrow="Deck"
+			title={deck.name}
+			description={deck.description ?? undefined}
+			actions={
+				<>
 					<Link
 						to="/deck/$id/play"
 						params={{ id: String(deck.id) }}
@@ -176,16 +165,17 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					>
 						{removeDeck.isPending ? "Deleting…" : "Delete deck"}
 					</ActionButton>
-				</div>
-				{error ? (
-					<p
-						className="mt-4 mb-0 text-xs leading-[1.5] text-auth-error"
-						role="alert"
-					>
-						{errorMessage(error)}
-					</p>
-				) : null}
-			</section>
+				</>
+			}
+		>
+			{error ? (
+				<p
+					className="mt-4 mb-0 text-xs leading-[1.5] text-auth-error"
+					role="alert"
+				>
+					{errorMessage(error)}
+				</p>
+			) : null}
 
 			<section
 				aria-labelledby="cards-title"
@@ -277,6 +267,6 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					</ul>
 				)}
 			</section>
-		</AppLayout>
+		</PageLayout>
 	);
 }

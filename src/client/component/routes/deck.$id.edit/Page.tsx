@@ -2,11 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
-import { AppLayout } from "#/client/component/shared/AppLayout";
 import {
 	DeckForm,
 	type DeckFormValues,
 } from "#/client/component/shared/DeckForm";
+import { PageLayout } from "#/client/component/shared/PageLayout";
 import { deckQueryKey, decksQueryKey } from "#/client/lib/deck";
 import { errorMessage } from "#/client/lib/error-message";
 import type { Deck } from "#/server/schema/deck";
@@ -27,17 +27,18 @@ export function Page({ deck }: { deck: Deck }) {
 	});
 
 	return (
-		<AppLayout>
-			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[520px]">
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Deck settings
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(32px,5vw,44px)] font-semibold tracking-[-0.075em]">
-					Edit deck
-				</h1>
-				<p className="m-0 mb-9 text-sm leading-[1.6] text-auth-muted">
-					Update the name or description. Your cards stay in this deck.
-				</p>
+		<PageLayout
+			width="narrow"
+			breadcrumbs={[
+				{ label: "Dashboard", href: "/dashboard" },
+				{ label: deck.name },
+				{ label: "Edit deck" },
+			]}
+			eyebrow="Deck settings"
+			title="Edit deck"
+			description="Update the name or description. Your cards stay in this deck."
+		>
+			<div className="mt-9">
 				{update.error ? (
 					<p
 						className="-mt-[5px] mb-[15px] text-xs leading-[1.5] text-auth-error"
@@ -65,7 +66,7 @@ export function Page({ deck }: { deck: Deck }) {
 						Cancel
 					</Link>
 				</div>
-			</section>
-		</AppLayout>
+			</div>
+		</PageLayout>
 	);
 }

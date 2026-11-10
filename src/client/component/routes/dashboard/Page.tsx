@@ -3,9 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
-import { AppLayout } from "#/client/component/shared/AppLayout";
-import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
 import { HighlightedText } from "#/client/component/shared/HighlightedText";
+import { PageLayout } from "#/client/component/shared/PageLayout";
 import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
 import { deckSearchQueryKey } from "#/client/lib/deck-search";
 import { useDebouncedValue } from "#/client/lib/use-debounced-value";
@@ -53,18 +52,12 @@ export function DashboardPage({
 	const highlightQuery = searchActive ? debouncedQuery : "";
 
 	return (
-		<AppLayout>
-			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[760px]">
-				<Breadcrumbs items={[{ label: "Dashboard" }]} />
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Your study space
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(36px,6vw,58px)] font-semibold tracking-[-0.075em]">
-					Welcome, {user.name}.
-				</h1>
-				<p className="m-0 text-sm text-auth-muted">Signed in as {user.email}</p>
-			</section>
-
+		<PageLayout
+			breadcrumbs={[{ label: "Dashboard" }]}
+			eyebrow="Your study space"
+			title={`Welcome, ${user.name}.`}
+			description={`Signed in as ${user.email}`}
+		>
 			<section
 				aria-labelledby="decks-title"
 				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[760px]"
@@ -174,6 +167,6 @@ export function DashboardPage({
 					</ul>
 				)}
 			</section>
-		</AppLayout>
+		</PageLayout>
 	);
 }

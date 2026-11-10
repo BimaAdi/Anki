@@ -258,7 +258,10 @@ describe("deck page", () => {
 		renderPage();
 
 		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
-		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		const section = breadcrumb.parentElement as HTMLElement;
+		expect(section.firstElementChild).toBe(breadcrumb);
+		expect(section.classList.contains("mt-[clamp(48px,9vh,96px)]")).toBe(true);
+		expect(section.classList.contains("max-w-[760px]")).toBe(true);
 		const dashboard = within(breadcrumb).getByRole("link", {
 			name: "Dashboard",
 		});
