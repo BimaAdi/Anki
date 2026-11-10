@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import {
 	cardSchema,
 	createCardSchema,
 	deleteCardSchema,
+	searchCardsSchema,
 	updateCardSchema,
 } from "#/server/schema/card";
 import * as cardService from "#/server/service/card";
@@ -37,4 +39,16 @@ export const deleteCard = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const userId = await requireUserId();
 		await cardService.deleteCard(userId, data.id);
+	});
+
+export const searchCards = createServerFn({ method: "GET" })
+	.validator(searchCardsSchema)
+	.handler(async ({ data }) => {
+		const userId = await requireUserId();
+		const result = await cardService.searchCards(userId, data.deckId, data);
+		if (!result) {
+			throw new Error("Deck not found");
+		}
+
+		return z.array(cardSchema).parse(result);
 	});

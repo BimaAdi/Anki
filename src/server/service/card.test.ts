@@ -4,7 +4,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "#/server/db";
 import { cards, decks, user } from "#/server/db/schema";
 import { closeTestDatabase } from "#/server/test/database";
-import { createCard, deleteCard, updateCard } from "./card";
+import { createCard, deleteCard, searchCards, updateCard } from "./card";
 import { createDeck } from "./deck";
 
 vi.mock("#/server/db", async () => {
@@ -262,5 +262,102 @@ describe("deleteCard", () => {
 
 		const rows = await db.select().from(cards);
 		expect(rows).toEqual([expect.objectContaining({ id: card?.id })]);
+	});
+});
+
+describe("searchCards", () => {
+	async function insertSearchCards() {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		const first = await createCard("user-1", deck.id, {
+			front: "hola",
+			back: "hello",
+		});
+		const second = await createCard("user-1", deck.id, {
+			front: "adios",
+			back: "goodbye",
+		});
+
+		return { deck, first, second };
+	}
+
+	it("returns every card in the deck when the query is blank", async () => {
+		const { deck, first, second } = await insertSearchCards();
+
+		const result = await searchCards("user-1", deck.id, {
+			query: "   ",
+			scope: "both",
+		});
+
+		expect(result?.map((card) => card.id)).toEqual([first?.id, second?.id]);
+	});
+
+	it("matches either side case-insensitively", async () => {
+		const { deck, first, second } = await insertSearchCards();
+
+		await expect(
+			searchCards("user-1", deck.id, { query: "HOLA", scope: "both" }),
+		).resolves.toEqual([expect.objectContaining({ id: first?.id })]);
+		await expect(
+			searchCards("user-1", deck.id, { query: "GoodBye", scope: "both" }),
+		).resolves.toEqual([expect.objectContaining({ id: second?.id })]);
+	});
+
+	it("only matches the front or back when a side is selected", async () => {
+		const { deck, first } = await insertSearchCards();
+
+		await expect(
+			searchCards("user-1", deck.id, { query: "hello", scope: "front" }),
+		).resolves.toEqual([]);
+		await expect(
+			searchCards("user-1", deck.id, { query: "hola", scope: "front" }),
+		).resolves.toEqual([expect.objectContaining({ id: first?.id })]);
+		await expect(
+			searchCards("user-1", deck.id, { query: "hola", scope: "back" }),
+		).resolves.toEqual([]);
+	});
+
+	it("treats percent and underscore as literal characters", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+		const percent = await createCard("user-1", deck.id, {
+			front: "100% done",
+			back: "complete",
+		});
+		const underscore = await createCard("user-1", deck.id, {
+			front: "snake case",
+			back: "under_score",
+		});
+		await createCard("user-1", deck.id, {
+			front: "plain",
+			back: "text",
+		});
+
+		await expect(
+			searchCards("user-1", deck.id, { query: "%", scope: "both" }),
+		).resolves.toEqual([expect.objectContaining({ id: percent?.id })]);
+		await expect(
+			searchCards("user-1", deck.id, { query: "_", scope: "back" }),
+		).resolves.toEqual([expect.objectContaining({ id: underscore?.id })]);
+	});
+
+	it("returns null for a deck that belongs to another user", async () => {
+		const deck = await createDeck("user-2", {
+			name: "Private",
+			description: "",
+		});
+
+		await expect(
+			searchCards("user-1", deck.id, { query: "anything", scope: "both" }),
+		).resolves.toBeNull();
+	});
+
+	it("rejects a query longer than 500 characters", async () => {
+		const deck = await createDeck("user-1", { name: "Deck", description: "" });
+
+		await expect(
+			searchCards("user-1", deck.id, {
+				query: "a".repeat(501),
+				scope: "both",
+			}),
+		).rejects.toThrow();
 	});
 });

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatCardCount, getCardTextSize, pickRandomCard } from "./deck";
+import {
+	formatCardCount,
+	formatDeckCount,
+	getCardTextSize,
+	pickRandomCard,
+} from "./deck";
 
 const cards = [
 	{ id: 1, front: "a" },
@@ -15,6 +20,17 @@ describe("formatCardCount", () => {
 	it("uses the plural otherwise", () => {
 		expect(formatCardCount(0)).toBe("0 cards");
 		expect(formatCardCount(2)).toBe("2 cards");
+	});
+});
+
+describe("formatDeckCount", () => {
+	it("uses the singular for exactly one deck", () => {
+		expect(formatDeckCount(1)).toBe("1 deck");
+	});
+
+	it("uses the plural otherwise", () => {
+		expect(formatDeckCount(0)).toBe("0 decks");
+		expect(formatDeckCount(2)).toBe("2 decks");
 	});
 });
 

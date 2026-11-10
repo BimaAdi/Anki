@@ -1,7 +1,12 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards } from "#/server/db/schema";
-import { createCardSchema, updateCardSchema } from "#/server/schema/card";
+import {
+	type CardSearchScope,
+	createCardSchema,
+	searchCardsSchema,
+	updateCardSchema,
+} from "#/server/schema/card";
 import { findOwnedDeck, ownedDeckIds } from "#/server/service/deck";
 import {
 	CardLimitReachedError,
@@ -68,4 +73,44 @@ export async function deleteCard(userId: string, cardId: number) {
 		.where(
 			and(eq(cards.id, cardId), inArray(cards.deckId, ownedDeckIds(userId))),
 		);
+}
+
+function likePattern(query: string) {
+	return `%${query.replace(/[\\%_]/g, "\\$&")}%`;
+}
+
+export async function searchCards(
+	userId: string,
+	deckId: number,
+	input: { query: string; scope: CardSearchScope },
+) {
+	const values = searchCardsSchema.parse({ deckId, ...input });
+	const deck = await findOwnedDeck(userId, values.deckId);
+	if (!deck) {
+		return null;
+	}
+
+	if (!values.query) {
+		return db
+			.select()
+			.from(cards)
+			.where(eq(cards.deckId, deck.id))
+			.orderBy(asc(cards.id));
+	}
+
+	const pattern = likePattern(values.query);
+	let matches: SQL<unknown> | undefined;
+	if (values.scope === "front") {
+		matches = ilike(cards.front, pattern);
+	} else if (values.scope === "back") {
+		matches = ilike(cards.back, pattern);
+	} else {
+		matches = or(ilike(cards.front, pattern), ilike(cards.back, pattern));
+	}
+
+	return db
+		.select()
+		.from(cards)
+		.where(and(eq(cards.deckId, deck.id), matches))
+		.orderBy(asc(cards.id));
 }

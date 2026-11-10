@@ -1,13 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { actionButtonClassName } from "#/client/component/shared/ActionButton";
-import { AppLayout } from "#/client/component/shared/AppLayout";
-import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
+import { HighlightedText } from "#/client/component/shared/HighlightedText";
+import { PageLayout } from "#/client/component/shared/PageLayout";
 import { decksQueryKey, formatCardCount } from "#/client/lib/deck";
+import { deckSearchQueryKey } from "#/client/lib/deck-search";
+import { useDebouncedValue } from "#/client/lib/use-debounced-value";
 import type { DeckSummary } from "#/server/schema/deck";
 import type { UserLimits } from "#/server/schema/user";
-import { listDecks } from "#/server/serverFn/deck";
+import { listDecks, searchDecks } from "#/server/serverFn/deck";
+
+import { DeckSearch } from "./DeckSearch";
 
 interface DashboardPageProps {
 	user: {
@@ -31,19 +36,28 @@ export function DashboardPage({
 	});
 	const atDeckLimit = decks.length >= limits.deckLimit;
 
-	return (
-		<AppLayout>
-			<section className="mx-auto mt-[clamp(48px,9vh,96px)] max-w-[760px]">
-				<Breadcrumbs items={[{ label: "Dashboard" }]} />
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Your study space
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(36px,6vw,58px)] font-semibold tracking-[-0.075em]">
-					Welcome, {user.name}.
-				</h1>
-				<p className="m-0 text-sm text-auth-muted">Signed in as {user.email}</p>
-			</section>
+	const [searchQuery, setSearchQuery] = useState("");
+	const trimmedQuery = searchQuery.trim();
+	const debouncedQuery = useDebouncedValue(trimmedQuery);
+	const searchActive = trimmedQuery.length > 0;
+	const { data: searchResults = [], isFetching: isSearchFetching } = useQuery({
+		queryKey: deckSearchQueryKey(debouncedQuery),
+		queryFn: () => searchDecks({ data: { query: debouncedQuery } }),
+		enabled: debouncedQuery.length > 0,
+		placeholderData: keepPreviousData,
+	});
+	const isSearching =
+		searchActive && (trimmedQuery !== debouncedQuery || isSearchFetching);
+	const displayedDecks = searchActive ? searchResults : decks;
+	const highlightQuery = searchActive ? debouncedQuery : "";
 
+	return (
+		<PageLayout
+			breadcrumbs={[{ label: "Dashboard" }]}
+			eyebrow="Your study space"
+			title={`Welcome, ${user.name}.`}
+			description={`Signed in as ${user.email}`}
+		>
 			<section
 				aria-labelledby="decks-title"
 				className="mx-auto mt-[clamp(40px,7vh,72px)] max-w-[760px]"
@@ -81,6 +95,15 @@ export function DashboardPage({
 					</output>
 				) : null}
 
+				<DeckSearch
+					query={searchQuery}
+					resultCount={searchResults.length}
+					totalCount={decks.length}
+					isSearching={isSearching}
+					onQueryChange={setSearchQuery}
+					onClear={() => setSearchQuery("")}
+				/>
+
 				{decks.length === 0 ? (
 					<div className="mt-6 rounded-xl border border-dashed border-[#cfd5c9] bg-[#fffefa] p-[27px]">
 						<h3 className="m-0 mb-2 text-[17px] tracking-[-0.035em]">
@@ -91,9 +114,15 @@ export function DashboardPage({
 							want to study.
 						</p>
 					</div>
+				) : searchActive && isSearching && displayedDecks.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">Searching decks…</p>
+				) : displayedDecks.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">
+						No decks match your search.
+					</p>
 				) : (
 					<ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{decks.map((deck) => (
+						{displayedDecks.map((deck) => (
 							<li
 								key={deck.id}
 								className="flex flex-col justify-between gap-5 rounded-xl border border-auth-line bg-[#fffefa] p-[22px]"
@@ -104,7 +133,7 @@ export function DashboardPage({
 										params={{ id: String(deck.id) }}
 										className="text-[17px] font-semibold tracking-[-0.035em] text-auth-ink no-underline hover:underline [overflow-wrap:anywhere]"
 									>
-										{deck.name}
+										<HighlightedText text={deck.name} query={highlightQuery} />
 									</Link>
 									{deck.description ? (
 										<p className="m-0 mt-2 line-clamp-2 text-[13px] leading-[1.6] text-auth-muted">
@@ -138,6 +167,6 @@ export function DashboardPage({
 					</ul>
 				)}
 			</section>
-		</AppLayout>
+		</PageLayout>
 	);
 }

@@ -28,6 +28,16 @@ export const cardSchema = z.object({
 	back: z.string(),
 });
 
+export const cardSearchScopeSchema = z.enum(["both", "front", "back"]);
+
+export const searchCardsSchema = z.object({
+	deckId: z.number().int().positive(),
+	query: z.string().trim().max(CARD_FRONT_MAX_LENGTH),
+	scope: cardSearchScopeSchema,
+});
+
+export type CardSearchScope = z.infer<typeof cardSearchScopeSchema>;
+
 export const createCardSchema = z.object({
 	deckId: z.number().int().positive(),
 	front: cardFrontSchema,

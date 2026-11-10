@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -6,20 +11,30 @@ import {
 	ActionButton,
 	actionButtonClassName,
 } from "#/client/component/shared/ActionButton";
-import { AppLayout } from "#/client/component/shared/AppLayout";
-import { Breadcrumbs } from "#/client/component/shared/Breadcrumbs";
+import { PageLayout } from "#/client/component/shared/PageLayout";
+import {
+	type CardSearchScope,
+	cardSearchQueryKey,
+} from "#/client/lib/card-search";
 import {
 	deckQueryKey,
 	decksQueryKey,
 	formatCardCount,
 } from "#/client/lib/deck";
 import { errorMessage } from "#/client/lib/error-message";
+import { useDebouncedValue } from "#/client/lib/use-debounced-value";
 import type { DeckDetail } from "#/server/schema/deck";
-import { createCard, deleteCard, updateCard } from "#/server/serverFn/card";
+import {
+	createCard,
+	deleteCard,
+	searchCards,
+	updateCard,
+} from "#/server/serverFn/card";
 import { deleteDeck, getDeck } from "#/server/serverFn/deck";
 
 import { CardForm, type CardFormValues } from "./CardForm";
 import { CardItem } from "./CardItem";
+import { CardSearch } from "./CardSearch";
 
 export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	const navigate = useNavigate();
@@ -41,6 +56,27 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 
 	const cardsNewestFirst = [...deck.cards].sort((a, b) => b.id - a.id);
 	const atCardLimit = deck.cards.length >= deck.cardLimit;
+
+	const [searchQuery, setSearchQuery] = useState("");
+	const [searchScope, setSearchScope] = useState<CardSearchScope>("both");
+	const trimmedQuery = searchQuery.trim();
+	const debouncedQuery = useDebouncedValue(trimmedQuery);
+	const searchActive = trimmedQuery.length > 0;
+	const { data: searchResults = [], isFetching: isSearchFetching } = useQuery({
+		queryKey: cardSearchQueryKey(deckId, debouncedQuery, searchScope),
+		queryFn: () =>
+			searchCards({
+				data: { deckId, query: debouncedQuery, scope: searchScope },
+			}),
+		enabled: debouncedQuery.length > 0,
+		placeholderData: keepPreviousData,
+	});
+	const isSearching =
+		searchActive && (trimmedQuery !== debouncedQuery || isSearchFetching);
+	const displayedCards = searchActive
+		? [...searchResults].sort((a, b) => b.id - a.id)
+		: cardsNewestFirst;
+	const highlightQuery = searchActive ? debouncedQuery : "";
 
 	function refreshDeck() {
 		void queryClient.invalidateQueries({ queryKey: deckQueryKey(deckId) });
@@ -98,26 +134,16 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 	}
 
 	return (
-		<AppLayout>
-			<section className="mx-auto mt-[clamp(40px,8vh,80px)] max-w-[760px]">
-				<Breadcrumbs
-					items={[
-						{ label: "Dashboard", href: "/dashboard" },
-						{ label: deck.name },
-					]}
-				/>
-				<p className="m-0 text-[11px] leading-[1.5] font-bold tracking-[0.16em] text-[#808c83] uppercase">
-					Deck
-				</p>
-				<h1 className="mt-[13px] mb-[9px] text-[clamp(32px,5vw,48px)] font-semibold tracking-[-0.075em] [overflow-wrap:anywhere]">
-					{deck.name}
-				</h1>
-				{deck.description ? (
-					<p className="m-0 text-sm leading-[1.6] whitespace-pre-wrap text-auth-muted">
-						{deck.description}
-					</p>
-				) : null}
-				<div className="mt-6 flex flex-wrap gap-2">
+		<PageLayout
+			breadcrumbs={[
+				{ label: "Dashboard", href: "/dashboard" },
+				{ label: deck.name },
+			]}
+			eyebrow="Deck"
+			title={deck.name}
+			description={deck.description ?? undefined}
+			actions={
+				<>
 					<Link
 						to="/deck/$id/play"
 						params={{ id: String(deck.id) }}
@@ -139,16 +165,17 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					>
 						{removeDeck.isPending ? "Deleting…" : "Delete deck"}
 					</ActionButton>
-				</div>
-				{error ? (
-					<p
-						className="mt-4 mb-0 text-xs leading-[1.5] text-auth-error"
-						role="alert"
-					>
-						{errorMessage(error)}
-					</p>
-				) : null}
-			</section>
+				</>
+			}
+		>
+			{error ? (
+				<p
+					className="mt-4 mb-0 text-xs leading-[1.5] text-auth-error"
+					role="alert"
+				>
+					{errorMessage(error)}
+				</p>
+			) : null}
 
 			<section
 				aria-labelledby="cards-title"
@@ -198,16 +225,35 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					</div>
 				)}
 
+				<CardSearch
+					query={searchQuery}
+					scope={searchScope}
+					resultCount={searchResults.length}
+					totalCount={deck.cards.length}
+					isSearching={isSearching}
+					onQueryChange={setSearchQuery}
+					onScopeChange={setSearchScope}
+					onClear={() => setSearchQuery("")}
+				/>
+
 				{deck.cards.length === 0 ? (
 					<p className="mt-6 text-sm text-auth-muted">
 						No cards yet. Add your first card above.
 					</p>
+				) : searchActive && isSearching && displayedCards.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">Searching cards…</p>
+				) : displayedCards.length === 0 ? (
+					<p className="mt-6 text-sm text-auth-muted">
+						No cards match your search.
+					</p>
 				) : (
 					<ul className="mt-6 flex flex-col gap-3">
-						{cardsNewestFirst.map((card) => (
+						{displayedCards.map((card) => (
 							<CardItem
 								key={card.id}
 								card={card}
+								searchQuery={highlightQuery}
+								searchScope={searchScope}
 								onUpdate={async (values) => {
 									resetErrors();
 									await editCard.mutateAsync({ id: card.id, ...values });
@@ -221,6 +267,6 @@ export function Page({ initialDeck }: { initialDeck: DeckDetail }) {
 					</ul>
 				)}
 			</section>
-		</AppLayout>
+		</PageLayout>
 	);
 }

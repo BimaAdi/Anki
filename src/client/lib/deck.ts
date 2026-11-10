@@ -8,6 +8,10 @@ export function formatCardCount(count: number) {
 	return `${count} ${count === 1 ? "card" : "cards"}`;
 }
 
+export function formatDeckCount(count: number) {
+	return `${count} ${count === 1 ? "deck" : "decks"}`;
+}
+
 const cardTextSizes = [
 	{ maxLength: 12, fontSize: 64 },
 	{ maxLength: 30, fontSize: 48 },

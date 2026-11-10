@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DeckDetail } from "#/server/schema/deck";
@@ -62,6 +68,22 @@ describe("play page", () => {
 		expect(
 			heading.closest("section")?.classList.contains("max-w-[760px]"),
 		).toBe(true);
+	});
+
+	it("shows the dashboard breadcrumb and the current page", () => {
+		render(<Page deck={deck} />);
+
+		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		expect(
+			within(breadcrumb)
+				.getByRole("link", { name: "Dashboard" })
+				.getAttribute("href"),
+		).toBe("/dashboard");
+		expect(within(breadcrumb).getByText("Spanish")).toBeTruthy();
+		expect(
+			within(breadcrumb).getByText("Play deck").getAttribute("aria-current"),
+		).toBe("page");
 	});
 
 	it("links to edit the deck and dashboard from the header", () => {

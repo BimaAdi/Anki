@@ -50,8 +50,10 @@ vi.mock("#/client/lib/auth-client", () => ({
 
 vi.mock("#/server/serverFn/deck", () => ({
 	listDecks: vi.fn(),
+	searchDecks: vi.fn(),
 }));
 
+import { searchDecks } from "#/server/serverFn/deck";
 import { DashboardPage } from "./Page";
 
 const user = { name: "Anki User", email: "user@example.com" };
@@ -84,7 +86,10 @@ describe("dashboard page", () => {
 		renderPage();
 
 		const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
-		expect(breadcrumb.parentElement?.firstElementChild).toBe(breadcrumb);
+		const section = breadcrumb.parentElement as HTMLElement;
+		expect(section.firstElementChild).toBe(breadcrumb);
+		expect(section.classList.contains("mt-[clamp(48px,9vh,96px)]")).toBe(true);
+		expect(section.classList.contains("max-w-[760px]")).toBe(true);
 		expect(screen.getByText("Dashboard").getAttribute("aria-current")).toBe(
 			"page",
 		);
@@ -121,6 +126,108 @@ describe("dashboard page", () => {
 			"/deck/2/play",
 		]);
 		expect(screen.queryByText("No decks yet.")).toBeNull();
+	});
+
+	it("places the search bar between the deck header and the deck list", () => {
+		renderPage([
+			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
+		]);
+
+		const heading = screen.getByRole("heading", { name: "Your decks" });
+		const search = screen.getByRole("searchbox", { name: "Search decks" });
+		const list = screen.getByText("Spanish").closest("ul") as HTMLElement;
+
+		expect(
+			heading.compareDocumentPosition(search) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+		expect(
+			search.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+	});
+
+	it("searches decks through the server function and shows how many match", async () => {
+		const decks = [
+			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
+			{ id: 2, name: "Math", description: "Algebra", cardCount: 1 },
+		];
+		vi.mocked(searchDecks).mockResolvedValue([decks[0]]);
+		renderPage(decks);
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search decks" }), {
+			target: { value: "span" },
+		});
+
+		await waitFor(() =>
+			expect(searchDecks).toHaveBeenCalledWith({
+				data: { query: "span" },
+			}),
+		);
+		expect(await screen.findByText("Showing 1 of 2 decks")).toBeTruthy();
+		expect(screen.getByRole("link", { name: "Spanish" })).toBeTruthy();
+		expect(screen.queryByRole("link", { name: "Math" })).toBeNull();
+	});
+
+	it("shows a message when no deck title matches", async () => {
+		const decks = [
+			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
+			{ id: 2, name: "Math", description: "Algebra", cardCount: 1 },
+		];
+		vi.mocked(searchDecks).mockResolvedValue([]);
+		renderPage(decks);
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search decks" }), {
+			target: { value: "algebra" },
+		});
+
+		expect(await screen.findByText("Showing 0 of 2 decks")).toBeTruthy();
+		await waitFor(() =>
+			expect(searchDecks).toHaveBeenCalledWith({
+				data: { query: "algebra" },
+			}),
+		);
+		expect(screen.getByText("No decks match your search.")).toBeTruthy();
+	});
+
+	it("underlines the matching deck title", async () => {
+		const decks = [
+			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
+			{ id: 2, name: "Math", description: "Algebra", cardCount: 1 },
+		];
+		vi.mocked(searchDecks).mockResolvedValue([decks[0]]);
+		renderPage(decks);
+
+		fireEvent.change(screen.getByRole("searchbox", { name: "Search decks" }), {
+			target: { value: "Spa" },
+		});
+
+		await waitFor(() => {
+			const match = screen.getByText("Spa");
+			expect(match.tagName).toBe("MARK");
+			expect(match.className).toContain("underline");
+		});
+	});
+
+	it("clears the deck search and shows every deck again", async () => {
+		const decks = [
+			{ id: 1, name: "Spanish", description: "Verbs", cardCount: 2 },
+			{ id: 2, name: "Math", description: "Algebra", cardCount: 1 },
+		];
+		vi.mocked(searchDecks).mockResolvedValue([decks[0]]);
+		renderPage(decks);
+
+		const search = screen.getByRole("searchbox", {
+			name: "Search decks",
+		}) as HTMLInputElement;
+		fireEvent.change(search, { target: { value: "span" } });
+
+		expect(await screen.findByText("Showing 1 of 2 decks")).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+
+		expect(search.value).toBe("");
+		expect(screen.getByRole("link", { name: "Math" })).toBeTruthy();
+		expect(screen.queryByText(/^Showing /)).toBeNull();
 	});
 
 	it("shows how many decks the user has out of their limit", () => {

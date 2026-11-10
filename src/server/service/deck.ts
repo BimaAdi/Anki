@@ -1,7 +1,7 @@
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 import { db } from "#/server/db";
 import { cards, decks } from "#/server/db/schema";
-import { createDeckSchema } from "#/server/schema/deck";
+import { createDeckSchema, searchDecksSchema } from "#/server/schema/deck";
 import {
 	DeckLimitReachedError,
 	getUserLimits,
@@ -34,6 +34,33 @@ export async function listDecks(userId: string) {
 		.from(decks)
 		.leftJoin(cards, eq(cards.deckId, decks.id))
 		.where(eq(decks.userId, userId))
+		.groupBy(decks.id)
+		.orderBy(asc(decks.id));
+}
+
+function likePattern(query: string) {
+	return `%${query.replace(/[\\%_]/g, "\\$&")}%`;
+}
+
+export async function searchDecks(userId: string, input: { query: string }) {
+	const values = searchDecksSchema.parse(input);
+
+	if (!values.query) {
+		return listDecks(userId);
+	}
+
+	const matches = ilike(decks.name, likePattern(values.query));
+
+	return db
+		.select({
+			id: decks.id,
+			name: decks.name,
+			description: decks.description,
+			cardCount: count(cards.id),
+		})
+		.from(decks)
+		.leftJoin(cards, eq(cards.deckId, decks.id))
+		.where(and(eq(decks.userId, userId), matches))
 		.groupBy(decks.id)
 		.orderBy(asc(decks.id));
 }
